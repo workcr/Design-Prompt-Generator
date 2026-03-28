@@ -4,7 +4,7 @@
 
 **Created:** 2026-03-27
 **Type:** Application
-**Stack:** Next.js 15 + TypeScript + SQLite + Vercel AI SDK + Replicate + Tailwind + shadcn/ui
+**Stack:** Next.js 15 + TypeScript + SQLite + Vercel AI SDK + Nano Banana 2 (Gemini API) + Tailwind + shadcn/ui
 **Skill Loadout:** GSD, ui-ux-pro-max, /paul:audit
 **Quality Gates:** type safety, agent output validation, schema integrity, prompt coherence
 
@@ -38,7 +38,9 @@ EDITOR
         └── Lock: style-critical fields to preserve coherence
 
 OUTPUT
-  └── Agent B2 (Schema + Blueprint) → Final Prompt → Replicate (image gen) → Output Image
+  └── Agent B2 (Schema + Blueprint) → Final Prompt ──┬── Nano Banana 2 (primary) → Output Image
+                                                      ├── Replicate (fallback)     → Output Image
+                                                      └── Copy to clipboard → Freepik / Higgsfield AI / Midjourney / etc.
 ```
 
 ---
@@ -52,7 +54,8 @@ OUTPUT
 | Vision (local) | Ollama — `qwen3-vl:30b` | Already installed; free, fast for dev |
 | Vision (production) | Gemini 1.5 Flash | Cheap, fast, strong vision capabilities |
 | Text (production) | GPT-4o mini | Cost-effective for B1/B2 grammar tasks |
-| Image Generation | Replicate API | Account exists; supports Flux, SDXL, custom models |
+| Image Generation (primary) | Nano Banana 2 — `gemini-3.1-flash-image-preview` | Same Gemini API key already in use; 4K output, grounding, ~$0.067/1024px |
+| Image Generation (fallback) | Replicate API | Account exists; Flux / SDXL when Nano Banana 2 is unavailable or too expensive |
 | UI | Tailwind CSS + shadcn/ui | Structured editor primitives (color pickers, locked fields, comboboxes) |
 | Storage (local) | SQLite via `better-sqlite3` | Zero-config, file-based, perfect for local-first |
 | Storage (production) | Supabase | Drop-in swap, same query patterns, adds auth + file storage |
@@ -61,13 +64,14 @@ OUTPUT
 ### AI Provider Config (env-driven switching)
 
 ```
-LOCAL_MODE=true  → Ollama (qwen3-vl:30b) for all agents
-LOCAL_MODE=false → Gemini 1.5 Flash (Agent A) + GPT-4o mini (B1, B2)
+LOCAL_MODE=true  → Ollama (qwen3-vl:30b) for all agents; Replicate for image gen
+LOCAL_MODE=false → Gemini 1.5 Flash (Agent A) + GPT-4o mini (B1, B2) + Nano Banana 2 (image gen)
 ```
 
 ### Research Needed
-- Replicate model selection: Flux.1-dev vs SDXL vs custom fine-tune — evaluate quality/cost tradeoff at Phase 6
+- Nano Banana 2 quality benchmark against Replicate Flux.1-dev for design-system-derived prompts — Phase 6
 - cogvlm2:10b vs qwen3-vl:30b for Agent A local mode — benchmark at Phase 2
+- Platform-specific prompt formatting rules (Midjourney suffix syntax, Freepik style tags, Higgsfield AI parameters) — Phase 5
 
 ---
 
@@ -81,7 +85,7 @@ LOCAL_MODE=false → Gemini 1.5 Flash (Agent A) + GPT-4o mini (B1, B2)
 | `DesignSchema` | id, project_id, frame, palette, layout, text_fields, type_scale, elements, style_checksum, locked_fields, raw_analysis | belongs to Project; edited by user |
 | `GrammarBlueprint` | id, project_id, sequence_pattern, density, avg_length, compression_style, raw_prompts, distilled_grammar | belongs to Project; reusable across projects |
 | `PromptOutput` | id, project_id, schema_snapshot, blueprint_id, final_prompt, model_used, created_at | belongs to Project; references Blueprint |
-| `GeneratedImage` | id, prompt_output_id, replicate_id, model, url, status, created_at | belongs to PromptOutput |
+| `GeneratedImage` | id, prompt_output_id, provider, provider_job_id, model, url, status, created_at | belongs to PromptOutput; provider = "nano_banana_2" \| "replicate" |
 
 ### Schema Detail: `DesignSchema`
 
@@ -119,7 +123,7 @@ LOCAL_MODE=false → Gemini 1.5 Flash (Agent A) + GPT-4o mini (B1, B2)
 | `/api/analyze` | POST | local: none | Agent A — image → DesignSchema (streaming) |
 | `/api/distill` | POST | local: none | Agent B1 — prompts → GrammarBlueprint (streaming) |
 | `/api/rewrite` | POST | local: none | Agent B2 — schema + blueprint → final prompt (streaming) |
-| `/api/generate` | POST | local: none | Send final prompt to Replicate, return image |
+| `/api/generate` | POST | local: none | Send final prompt to Nano Banana 2 (primary) or Replicate (fallback), return image |
 | `/api/schemas/[id]` | GET, PATCH | local: none | Get / update DesignSchema (field edits + locks) |
 | `/api/blueprints` | GET, POST | local: none | List / create GrammarBlueprints |
 | `/api/blueprints/[id]` | GET | local: none | Get blueprint detail |
@@ -151,7 +155,7 @@ pnpm dev
 
 - SQLite → Supabase (env swap, no query changes)
 - Ollama → Gemini 1.5 Flash + GPT-4o mini (env swap via `LOCAL_MODE=false`)
-- Replicate: same API, production key
+- Image gen: Nano Banana 2 as primary (`GOOGLE_GENERATIVE_AI_API_KEY` already set); Replicate as fallback (`REPLICATE_API_TOKEN`)
 - File uploads: Supabase Storage (replaces local `/uploads`)
 - Zero-config Vercel deploy from `main` branch
 
@@ -166,6 +170,8 @@ GOOGLE_GENERATIVE_AI_API_KEY=
 ANTHROPIC_API_KEY=
 
 # Image generation
+# Primary: Nano Banana 2 uses GOOGLE_GENERATIVE_AI_API_KEY (already set above)
+# Fallback:
 REPLICATE_API_TOKEN=
 
 # Storage (production only)
@@ -202,13 +208,14 @@ Tailwind CSS + shadcn/ui. Components needed: color swatches, locked field badges
 | `└── Tab: Analyze` | Upload image → run Agent A → view/edit schema | High |
 | `└── Tab: Grammar` | Input reference prompts → run Agent B1 → view blueprint | Medium |
 | `└── Tab: Editor` | Structured Prompt Editor — edit/lock schema fields | High |
-| `└── Tab: Rewrite` | Run Agent B2 → preview final prompt | Medium |
-| `└── Tab: Generate` | Send to Replicate → output image → compare | Medium |
+| `└── Tab: Rewrite` | Run Agent B2 → preview final prompt → copy / export for external platforms | Medium |
+| `└── Tab: Generate` | Send to Nano Banana 2 or Replicate → output image → compare | Medium |
 | `/blueprints` | Library of saved Grammar Blueprints | Low |
 
 ### Real-Time Requirements
 - Agent streaming: SSE via Vercel AI SDK `useCompletion` / `useChat`
-- Replicate polling: webhook or polling for image generation status
+- Nano Banana 2: streaming response via Gemini API (same SDK pattern)
+- Replicate fallback: polling for image generation status
 
 ### Responsive Needs
 Desktop-first. The editor workspace is complex enough that mobile is out of scope for MVP.
@@ -221,12 +228,15 @@ Desktop-first. The editor workspace is complex enough that mobile is out of scop
 |------------|------|---------|------|
 | Ollama | Local HTTP | Local vision + LLM inference | None (local) |
 | OpenAI | REST API | GPT-4o mini for B1/B2 in production | API key |
-| Google AI | REST API | Gemini 1.5 Flash for Agent A in production | API key |
-| Replicate | REST API | Image generation (Flux / SDXL) | API token |
+| Google AI (Gemini) | REST API | Gemini 1.5 Flash (Agent A) + Nano Banana 2 (image gen) | API key — one key, two uses |
+| Replicate | REST API | Image gen fallback (Flux / SDXL) | API token |
 | Supabase | SDK | Auth + DB + Storage (production) | Service key + anon key |
+| Freepik / Higgsfield AI / Midjourney | External (manual) | Prompt export targets — user copies prompt, pastes externally | None — clipboard only |
 
 ### Fallback Strategy
-If Ollama is down in local mode: hard error with clear message — no silent fallback to paid APIs during dev.
+- If Ollama is down in local mode: hard error with clear message — no silent fallback to paid APIs during dev
+- If Nano Banana 2 is unavailable: fall back to Replicate (env flag `IMAGE_GEN_PROVIDER=replicate`)
+- Prompt copy/export works regardless of which image gen provider is active — it's always available
 
 ---
 
@@ -252,15 +262,18 @@ If Ollama is down in local mode: hard error with clear message — no silent fal
 - **Testable:** Edit a color in the palette, lock the style_checksum field, verify edits persist and locked fields are marked in the output
 - **Outcome:** Users can safely customize extracted design logic without breaking coherence
 
-### Phase 5: Agent B2 — Prompt Rewriter
-- **Build:** `/api/rewrite` streaming endpoint, schema + blueprint → final prompt generation, prompt preview UI with copy button, output saved as PromptOutput
-- **Testable:** Feed an edited DesignSchema + a GrammarBlueprint, receive a final prompt that reflects the schema content written in the blueprint's grammar
-- **Outcome:** The two layers merge into one high-quality prompt — the core value of the system
+### Phase 5: Agent B2 — Prompt Rewriter + Export Panel
+- **Build:** `/api/rewrite` streaming endpoint, schema + blueprint → final prompt generation, prompt preview UI, output saved as PromptOutput. Prompt Export Panel with:
+  - One-click copy to clipboard (plain text)
+  - Platform presets: **Midjourney** (appends `--ar`, `--style`, `--v` flags), **Freepik** (style tag formatting), **Higgsfield AI** (motion/cinematic parameter block), **Generic** (clean plain text)
+  - Character count + token estimate per platform
+- **Testable:** Generate a final prompt, copy it in Midjourney format and verify suffix syntax is correct, copy in generic format and verify it's clean plain text
+- **Outcome:** The two layers merge into one high-quality prompt that can be sent into any image-gen platform — in-app or external
 
 ### Phase 6: Image Generation + Comparison
-- **Build:** `/api/generate` Replicate integration (Flux.1-dev default), generation status polling, output image display, side-by-side comparison (input image vs generated image), image save to GeneratedImage
-- **Testable:** Send a final prompt to Replicate, receive a generated image, compare it against the original reference
-- **Outcome:** Full pipeline is complete — image in, image out, with full control in between
+- **Build:** `/api/generate` with provider switch — Nano Banana 2 (`gemini-3.1-flash-image-preview`) as primary via Gemini API, Replicate (Flux.1-dev) as fallback via `IMAGE_GEN_PROVIDER` env flag. Generation status handling, output image display, side-by-side comparison (input image vs generated image), image save to GeneratedImage with `provider` field
+- **Testable:** Send a final prompt to Nano Banana 2, receive a generated image, compare against original reference. Toggle `IMAGE_GEN_PROVIDER=replicate` and confirm fallback works
+- **Outcome:** Full pipeline is complete — image in, image out, with full control in between. Provider is swappable without code changes
 
 ### Phase 7: Polish + Local-First UX
 - **Build:** Project history, blueprint library management, prompt output history per project, export (schema JSON, final prompt text, generated image), onboarding flow for new users
@@ -292,7 +305,8 @@ If Ollama is down in local mode: hard error with clear message — no silent fal
 | Zod validation | All agent outputs validated | Phases 2, 3, 5 |
 | Schema integrity | No null required fields | Phase 1 migration |
 | Prompt coherence | Manual review of 3 test cases | Phase 5 |
-| Replicate reliability | Handle timeout + error states | Phase 6 |
+| Prompt export formats | Verify Midjourney / Freepik / Higgsfield syntax | Phase 5 |
+| Image gen provider swap | Both Nano Banana 2 and Replicate produce valid output | Phase 6 |
 
 ---
 
@@ -301,6 +315,9 @@ If Ollama is down in local mode: hard error with clear message — no silent fal
 1. **Vercel AI SDK over raw API calls** — unified provider interface means local/prod swap is one env var, not a code change
 2. **SQLite local, Supabase production** — same query patterns, zero migration complexity, no Docker dependency for local dev
 3. **Gemini 1.5 Flash as production vision model** — cheaper than GPT-4V, comparable quality for structured extraction tasks
+8. **Nano Banana 2 as primary image gen** — same Google API key already in use for Agent A; one less credential, native streaming, 4K output, ranked #1 on image arena at launch (Feb 2026)
+9. **Replicate kept as fallback** — account exists; provides a safety net if Nano Banana 2 is rate-limited, down, or too expensive at scale
+10. **Prompt export panel over API integrations** — Freepik, Higgsfield AI, and Midjourney don't expose write APIs; clipboard export is the correct abstraction and keeps the system platform-agnostic
 4. **GrammarBlueprint as a reusable entity** — one blueprint can serve many projects; users build a library of prompt styles over time
 5. **Streaming for all agent routes** — long-running LLM calls need progressive feedback; SSE via Vercel AI SDK is simplest
 6. **Desktop-first UI** — the editor workspace requires horizontal space; mobile complexity deferred
@@ -310,11 +327,12 @@ If Ollama is down in local mode: hard error with clear message — no silent fal
 
 ## Open Questions
 
-1. **Flux vs SDXL on Replicate** — which produces better results for design-system-derived prompts? Benchmark in Phase 6.
+1. **Nano Banana 2 vs Replicate Flux.1-dev** — which produces stronger results for design-system-derived prompts? Benchmark head-to-head in Phase 6.
 2. **cogvlm2:10b vs qwen3-vl:30b** — is the smaller model sufficient for Agent A? Test in Phase 2.
 3. **Grammar blueprint granularity** — how many reference prompts are needed for a reliable blueprint? Need to test with 3, 5, 10 samples.
 4. **Schema complexity ceiling** — what happens when Agent A encounters highly complex images (photography vs flat design vs 3D)? May need prompt tuning per image category.
-5. **Production model costs** — estimate Gemini 1.5 Flash + GPT-4o mini cost per full pipeline run before Phase 8.
+5. **Production model costs** — estimate full pipeline cost: Gemini 1.5 Flash (Agent A) + GPT-4o mini (B1/B2) + Nano Banana 2 (1024px image) before Phase 8. Target: under $0.20/run.
+6. **Platform prompt formatting** — confirm current Midjourney v7, Freepik, and Higgsfield AI parameter syntax before Phase 5 build.
 
 ---
 
@@ -331,6 +349,8 @@ If Ollama is down in local mode: hard error with clear message — no silent fal
 - [Vercel AI SDK Docs](https://sdk.vercel.ai/docs)
 - [Vercel AI SDK — Ollama Provider](https://sdk.vercel.ai/providers/community-providers/ollama)
 - [Vercel AI SDK — Google Provider](https://sdk.vercel.ai/providers/ai-sdk-providers/google-generative-ai)
+- [Nano Banana 2 — Google AI for Developers](https://ai.google.dev/gemini-api/docs/image-generation)
+- [Gemini 3.1 Flash Image Preview — Model Docs](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-image-preview)
 - [Replicate API Docs](https://replicate.com/docs)
 - [shadcn/ui Components](https://ui.shadcn.com)
 - [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
@@ -339,4 +359,4 @@ If Ollama is down in local mode: hard error with clear message — no silent fal
 
 ---
 
-*Last updated: 2026-03-27*
+*Last updated: 2026-03-28*
