@@ -5,15 +5,15 @@
 See: .paul/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Convert any image into a fully controllable, style-aware image-gen prompt — without losing structural design logic or writing quality
-**Current focus:** Project initialized — ready for Phase 1 planning
+**Current focus:** Phase 1 Plan 02 — Data Layer + Project API
 
 ## Current Position
 
 Milestone: v0.1 — Local Pipeline MVP
 Phase: 1 of 8 (Foundation) — In Progress
-Plan: 01-01 complete (1 of 3) — ready for 01-02
-Status: Loop closed — ready for next PLAN
-Last activity: 2026-03-28 — Unified 01-01 (Scaffold + Env Config)
+Plan: 01-02 applied (2 of 3) — ready for UNIFY
+Status: APPLY complete — ready for UNIFY
+Last activity: 2026-03-28 — Applied 01-02 (Data Layer + Project API)
 
 Progress:
 - Milestone: [█░░░░░░░░░] 4%
@@ -24,7 +24,7 @@ Progress:
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [Loop closed — ready for next PLAN]
+  ✓        ✓              [APPLY complete — run UNIFY]
 ```
 
 ## Accumulated Context
@@ -61,9 +61,9 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-28
-Stopped at: Plan 01-01 unified — loop closed
-Next action: Run /paul:plan for Plan 01-02 (Data Layer + Project API)
-Resume context: .paul/phases/01-foundation/01-01-SUMMARY.md
+Stopped at: Plan 01-02 applied — loop open at UNIFY
+Next action: Run /paul:unify for Plan 01-02 (Data Layer + Project API)
+Resume context: .paul/phases/01-foundation/01-02-PLAN.md
 
 ---
 *STATE.md — Updated after every significant action*
