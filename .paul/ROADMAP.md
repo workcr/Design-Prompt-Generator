@@ -7,14 +7,14 @@ Eight phases take the project from a bare Next.js scaffold to a deployed, authen
 ## Current Milestone
 
 **v0.1 — Local Pipeline MVP** (v0.1.0)
-Status: Not started
+Status: In progress
 Phases: 0 of 8 complete
 
 ## Phases
 
 | Phase | Name | Plans | Status | Completed |
 |-------|------|-------|--------|-----------|
-| 1 | Foundation | TBD | Not started | - |
+| 1 | Foundation | 3 | Planning | - |
 | 2 | Agent A — Design Schema Extraction | TBD | Not started | - |
 | 3 | Agent B1 — Grammar Blueprint Distillation | TBD | Not started | - |
 | 4 | Structured Prompt Editor | TBD | Not started | - |
@@ -40,7 +40,9 @@ Phases: 0 of 8 complete
 - File upload endpoint (image/* only, max 10MB)
 
 **Plans:**
-- [ ] 01-01: TBD during /paul:plan
+- [ ] 01-01: Scaffold + Env Config (Next.js 15 · Tailwind · shadcn/ui · env.ts)
+- [ ] 01-02: Data Layer + Project API (SQLite schema · /api/projects CRUD)
+- [ ] 01-03: File Upload + Dashboard UI (/api/upload · dashboard · workspace shell)
 
 ---
 
