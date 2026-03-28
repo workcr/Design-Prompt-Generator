@@ -360,3 +360,9 @@ Desktop-first. The editor workspace is complex enough that mobile is out of scop
 ---
 
 *Last updated: 2026-03-28*
+
+---
+
+**Graduated:** 2026-03-28
+**Location:** `/Volumes/RMNDS1 AI CORE/Projects/Design-Prompt-Generator/`
+**README:** `README.md`
