@@ -13,8 +13,8 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 | Attribute | Value |
 |-----------|-------|
 | Type | Application |
-| Version | 0.0.0 |
-| Status | Initializing |
+| Version | 0.1.0-dev |
+| Status | Foundation complete — Phase 2 ready |
 | Last Updated | 2026-03-28 |
 
 **Repository:** https://github.com/workcr/Design-Prompt-Generator
@@ -30,13 +30,21 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 - **Image Generation:** Send the final prompt to Nano Banana 2 (primary) or Replicate (fallback); compare output against the original reference image side-by-side
 
 ### Validated (Shipped)
-None yet.
+
+- ✓ **Project scaffold** — Next.js 16, TypeScript strict + noUncheckedIndexedAccess, Tailwind v4, pnpm — Phase 1
+- ✓ **Env config system** — `src/lib/env.ts` with LOCAL_MODE provider switching, IMAGE_GEN_PROVIDER override — Phase 1
+- ✓ **shadcn/ui component library** — 12 components installed and importable — Phase 1
+- ✓ **SQLite data layer** — WAL-mode singleton (`getDb()`), auto-migration, 5-table schema, 4 indexes, cascade rules — Phase 1
+- ✓ **TypeScript interfaces** — Project, DesignSchema, GrammarBlueprint, PromptOutput, GeneratedImage, ProjectDetail — Phase 1
+- ✓ **Project CRUD API** — GET/POST `/api/projects`, GET/PATCH/DELETE `/api/projects/[id]`, Zod validation — Phase 1
+- ✓ **File upload endpoint** — POST `/api/upload`, image/* only, ≤10MB, UUID filenames, saves to `uploads/` — Phase 1
+- ✓ **Project dashboard** — live list, create, open, delete at `/` — Phase 1
+- ✓ **Workspace shell** — `/projects/[id]` with Analyze/Blueprint/Prompt/Output tab scaffold — Phase 1
 
 ### Active (In Progress)
-None yet.
+None.
 
 ### Planned (Next)
-- [ ] Phase 1: Foundation — project scaffold, SQLite, file upload
 - [ ] Phase 2: Agent A — image → design schema
 - [ ] Phase 3: Agent B1 — prompts → grammar blueprint
 - [ ] Phase 4: Structured Prompt Editor
@@ -100,6 +108,13 @@ Local-first development using Ollama for free inference; production swaps to Gem
 | Prompt export panel over API integrations | Freepik/Higgsfield/Midjourney don't expose write APIs; clipboard is correct abstraction | 2026-03-28 | Active |
 | No auth in local mode | Removes friction during development | 2026-03-28 | Active |
 | Desktop-first UI | Editor workspace requires horizontal space; mobile deferred | 2026-03-28 | Active |
+| Zod v4: `.default()` before `.transform()` | Default must match raw input type, not transformed output | 2026-03-28 | Active |
+| `pnpm.onlyBuiltDependencies` for native addons | Non-interactive equivalent of `pnpm approve-builds` — required for better-sqlite3 | 2026-03-28 | Active |
+| JSON fields stored as TEXT in SQLite | Serialization belongs to the API layer, not the transport layer | 2026-03-28 | Active |
+| Next.js 16 route params are `Promise<{id}>` | Dynamic route params are async in Next.js 15+ — must `await params` | 2026-03-28 | Active |
+| Server components call `getDb()` directly | No HTTP round-trip needed for server-rendered pages; client components use fetch | 2026-03-28 | Active |
+| `Link + buttonVariants()` for styled anchors | `@base-ui/react` Button has no `asChild` — use CVA classes directly on Link | 2026-03-28 | Active |
+| `allowedDevOrigins` for LAN dev access | Next.js 16 blocks `/_next/*` from non-localhost by default; needed for network preview | 2026-03-28 | Active |
 
 ## Success Metrics
 
@@ -139,4 +154,4 @@ Local-first development using Ollama for free inference; production swaps to Gem
 
 ---
 *PROJECT.md — Updated when requirements or context change*
-*Last updated: 2026-03-28*
+*Last updated: 2026-03-28 after Phase 1 (Foundation)*

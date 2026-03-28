@@ -7,9 +7,9 @@
     "status": "in_progress"
   },
   "phase": {
-    "number": 1,
-    "name": "Foundation",
-    "status": "in_progress"
+    "number": 2,
+    "name": "Agent A — Design Schema Extraction",
+    "status": "not_started"
   },
   "loop": {
     "plan": null,
@@ -17,7 +17,7 @@
   },
   "timestamps": {
     "created_at": "2026-03-28T00:00:00Z",
-    "updated_at": "2026-03-28T01:00:00Z"
+    "updated_at": "2026-03-28T02:00:00Z"
   },
   "satellite": {
     "groom": true
