@@ -4,12 +4,12 @@
   "milestone": {
     "name": "v0.1 — Local Pipeline MVP",
     "version": "0.1.0",
-    "status": "not_started"
+    "status": "in_progress"
   },
   "phase": {
-    "number": 0,
-    "name": "None",
-    "status": "not_started"
+    "number": 1,
+    "name": "Foundation",
+    "status": "in_progress"
   },
   "loop": {
     "plan": null,

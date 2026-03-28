@@ -40,7 +40,7 @@ Phases: 0 of 8 complete
 - File upload endpoint (image/* only, max 10MB)
 
 **Plans:**
-- [ ] 01-01: Scaffold + Env Config (Next.js 15 · Tailwind · shadcn/ui · env.ts)
+- [x] 01-01: Scaffold + Env Config (Next.js 16 · Tailwind v4 · shadcn/ui · env.ts) — 2026-03-28
 - [ ] 01-02: Data Layer + Project API (SQLite schema · /api/projects CRUD)
 - [ ] 01-03: File Upload + Dashboard UI (/api/upload · dashboard · workspace shell)
 
