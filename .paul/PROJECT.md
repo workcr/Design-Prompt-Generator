@@ -14,8 +14,8 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 |-----------|-------|
 | Type | Application |
 | Version | 0.1.0-dev |
-| Status | Agent B1 complete — Phase 4 ready |
-| Last Updated | 2026-03-28 |
+| Status | Structured Prompt Editor complete — Phase 5 ready |
+| Last Updated | 2026-03-29 |
 
 **Repository:** https://github.com/workcr/Design-Prompt-Generator
 
@@ -48,12 +48,13 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 - ✓ **GrammarBlueprint schema** — `src/lib/schemas/grammar-blueprint.ts`, 9-field Zod schema (SequencePattern, density, avg_length, compression, sentence structure, qualifier placement, characteristic phrases, style vocab, summary) + `GRAMMAR_DISTILLATION_PROMPT` — Phase 3
 - ✓ **Agent B1 — /api/distill** — POST endpoint: validates → `generateObject()` with text model → persists to `grammar_blueprints` → returns `{ id, blueprint }` — Phase 3
 - ✓ **Blueprint tab UI** — Prompt textarea (one per line, live count), 4-state machine, grammar blueprint viewer with 5 sections — Phase 3
+- ✓ **Schema API routes** — GET `/api/schemas?projectId=X` (latest schema for project), PATCH `/api/schemas/[id]` (partial field updates + locked_fields, all 6 JSON columns, RETURNING *) — Phase 4
+- ✓ **Structured Prompt Editor** — `PromptTab` client component: 5-state machine, editable Frame/Palette/Layout/Typography fields, color pickers for palette, per-section lock toggles with locked badge, amber modified dot, save button → PATCH with dirty reset — Phase 4
 
 ### Active (In Progress)
 None.
 
 ### Planned (Next)
-- [ ] Phase 4: Structured Prompt Editor
 - [ ] Phase 5: Agent B2 + prompt export panel
 - [ ] Phase 6: Image generation + comparison
 - [ ] Phase 7: Polish + local-first UX
@@ -130,6 +131,10 @@ Local-first development using Ollama for free inference; production swaps to Gem
 | `style_summary` from `raw_analysis` JSON | No dedicated column; parsed from full extraction JSON — migration deferred to Phase 7 | 2026-03-28 | Active |
 | `idle` + `error` merged in BlueprintTab | Textarea preserved on error — splitting branches would require duplicating the entire form | 2026-03-28 | Active |
 | Grammar sub-fields in `distilled_grammar` JSON | sentence_structure, qualifier_placement, characteristic_phrases, style_vocabulary, summary have no dedicated DB columns — deferred migration to Phase 7 | 2026-03-28 | Active |
+| `z.unknown().optional()` for PATCH JSON field columns | Editor sends parsed objects; server owns JSON.stringify boundary — consistent with parseDbSchema() deserializing at display layer | 2026-03-29 | Active |
+| `isDirty` via `JSON.stringify` comparison | No per-field dirty map needed — whole-schema comparison is simple and sufficient; reset is `setOriginal(schema)` | 2026-03-29 | Active |
+| `NonNullable<T>["field"]` for nullable Zod type index | `DesignExtraction["type_scale"]` is `TypeScaleType \| null` (Zod `.nullable()`); direct index fails strict TS — wrap with NonNullable<> | 2026-03-29 | Active |
+| Text Fields + Elements display-only in editor | Per-item array editing adds significant complexity; lock/unlock is sufficient for Phase 4 — content editing deferred to Phase 7 | 2026-03-29 | Active |
 
 ## Success Metrics
 
@@ -169,4 +174,4 @@ Local-first development using Ollama for free inference; production swaps to Gem
 
 ---
 *PROJECT.md — Updated when requirements or context change*
-*Last updated: 2026-03-28 after Phase 3 (Agent B1 — Grammar Blueprint Distillation)*
+*Last updated: 2026-03-29 after Phase 4 (Structured Prompt Editor)*

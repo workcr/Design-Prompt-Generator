@@ -2,32 +2,33 @@
 
 ## Project Reference
 
-See: .paul/PROJECT.md (updated 2026-03-28)
+See: .paul/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Convert any image into a fully controllable, style-aware image-gen prompt — without losing structural design logic or writing quality
-**Current focus:** Phase 4 — Structured Prompt Editor
+**Current focus:** Phase 5 — Agent B2 + Prompt Export Panel
 
 ## Current Position
 
 Milestone: v0.1 — Local Pipeline MVP
-Phase: 4 of 8 (Structured Prompt Editor) — Not started
+Phase: 5 of 8 (Agent B2 + Prompt Export Panel) — Not started
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-03-28 — Phase 3 complete, transitioned to Phase 4
+Last activity: 2026-03-29 — Phase 4 complete, transitioned to Phase 5
 
 Progress:
-- Milestone: [████████░░] 37%
+- Milestone: [█████░░░░░] 50%
 - Phase 1:   [██████████] 100% ✅
 - Phase 2:   [██████████] 100% ✅
 - Phase 3:   [██████████] 100% ✅
-- Phase 4:   [░░░░░░░░░░] 0%
+- Phase 4:   [██████████] 100% ✅
+- Phase 5:   [░░░░░░░░░░] 0%
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ○        ○        ○     [Ready to plan Phase 4]
+  ○        ○        ○     [Ready to plan Phase 5]
 ```
 
 ## Accumulated Context
@@ -46,6 +47,10 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | `style_summary` + grammar sub-fields from JSON columns | 02-02 / 03-02 | No dedicated DB columns; deferred migration to Phase 7 |
 | `idle` + `error` merged in BlueprintTab | 03-02 | Textarea preserved on error; pattern for future multi-step forms |
 | `getTextProvider()` reuses `@ai-sdk/openai` | 03-01 | Covers both Ollama and OpenAI prod — no new package |
+| `z.unknown().optional()` for PATCH JSON field columns | 04-01 | Editor sends objects; server owns stringify boundary |
+| `isDirty` via JSON.stringify comparison | 04-02 | Simple whole-schema dirty tracking; reset = setOriginal(schema) |
+| `NonNullable<T>["field"]` for nullable Zod type index | 04-02 | Pattern for all future nullable Zod field type casts |
+| Text Fields + Elements display-only in editor | 04-02 | Array content editing deferred to Phase 7 Polish |
 
 Decisions imported from PLANNING.md at init:
 
@@ -57,9 +62,9 @@ Decisions imported from PLANNING.md at init:
 
 ### Git State
 
-Last commit: 06334a0 (Phase 2)
+Last commit: 3a75bea (Phase 3)
 Branch: main
-Phase 3 commit: pending
+Phase 4 commit: pending
 
 ### Deferred Issues
 
@@ -72,15 +77,16 @@ Phase 3 commit: pending
 | `style_summary` dedicated DB column | 02-02 | S | Phase 7 (Polish) |
 | Grammar sub-fields dedicated DB columns | 03-02 | S | Phase 7 (Polish) |
 | Blueprint selection UI (which blueprint to use) | 03-02 | M | Phase 5 |
+| Text Fields + Elements per-item editing | 04-02 | M | Phase 7 (Polish) |
 
 ### Blockers/Concerns
 None.
 
 ## Session Continuity
 
-Last session: 2026-03-28
-Stopped at: Phase 3 complete — transition done
-Next action: Run /paul:plan for Phase 4 (Structured Prompt Editor)
+Last session: 2026-03-29
+Stopped at: Phase 4 complete — transition done
+Next action: Run /paul:plan for Phase 5 (Agent B2 + Prompt Export Panel)
 Resume context: .paul/ROADMAP.md
 
 ---

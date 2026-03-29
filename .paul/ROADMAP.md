@@ -8,7 +8,7 @@ Eight phases take the project from a bare Next.js scaffold to a deployed, authen
 
 **v0.1 — Local Pipeline MVP** (v0.1.0)
 Status: In progress
-Phases: 3 of 8 complete
+Phases: 4 of 8 complete
 
 ## Phases
 
@@ -17,7 +17,7 @@ Phases: 3 of 8 complete
 | 1 | Foundation | 3 | ✅ Complete | 2026-03-28 |
 | 2 | Agent A — Design Schema Extraction | 2 | ✅ Complete | 2026-03-28 |
 | 3 | Agent B1 — Grammar Blueprint Distillation | 2 | ✅ Complete | 2026-03-28 |
-| 4 | Structured Prompt Editor | TBD | Not started | - |
+| 4 | Structured Prompt Editor | 2 | ✅ Complete | 2026-03-29 |
 | 5 | Agent B2 + Prompt Export Panel | TBD | Not started | - |
 | 6 | Image Generation + Comparison | TBD | Not started | - |
 | 7 | Polish + Local-First UX | TBD | Not started | - |
@@ -97,7 +97,8 @@ Phases: 3 of 8 complete
 - Schema diff view (original vs edited)
 
 **Plans:**
-- [ ] 04-01: TBD during /paul:plan
+- [x] 04-01: Schema API Routes (GET /api/schemas · PATCH /api/schemas/[id] · locked_fields persistence) — 2026-03-29
+- [x] 04-02: Prompt Editor UI (PromptTab · editable fields · lock toggles · save) — 2026-03-29
 
 ---
 
@@ -179,4 +180,4 @@ Phases: 3 of 8 complete
 
 ---
 *Roadmap created: 2026-03-28*
-*Last updated: 2026-03-28*
+*Last updated: 2026-03-29*

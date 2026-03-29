@@ -11,6 +11,7 @@ import {
 import type { Project } from "@/types/db"
 import AnalyzeTab from "./analyze-tab"
 import BlueprintTab from "./blueprint-tab"
+import PromptTab from "./prompt-tab"
 
 type PageProps = { params: Promise<{ id: string }> }
 
@@ -68,10 +69,7 @@ export default async function WorkspacePage({ params }: PageProps) {
           </TabsContent>
 
           <TabsContent value="prompt">
-            <PlaceholderTab
-              phase="Phase 4 / 5"
-              description="Edit and lock schema fields, then generate the final prompt by merging the design schema with the grammar blueprint."
-            />
+            <PromptTab projectId={id} />
           </TabsContent>
 
           <TabsContent value="output">
