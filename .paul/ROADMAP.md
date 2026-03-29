@@ -8,14 +8,14 @@ Eight phases take the project from a bare Next.js scaffold to a deployed, authen
 
 **v0.1 — Local Pipeline MVP** (v0.1.0)
 Status: In progress
-Phases: 1 of 8 complete
+Phases: 2 of 8 complete
 
 ## Phases
 
 | Phase | Name | Plans | Status | Completed |
 |-------|------|-------|--------|-----------|
 | 1 | Foundation | 3 | ✅ Complete | 2026-03-28 |
-| 2 | Agent A — Design Schema Extraction | TBD | Not started | - |
+| 2 | Agent A — Design Schema Extraction | 2 | ✅ Complete | 2026-03-28 |
 | 3 | Agent B1 — Grammar Blueprint Distillation | TBD | Not started | - |
 | 4 | Structured Prompt Editor | TBD | Not started | - |
 | 5 | Agent B2 + Prompt Export Panel | TBD | Not started | - |
@@ -60,7 +60,8 @@ Phases: 1 of 8 complete
 - Schema viewer UI in Analyze tab
 
 **Plans:**
-- [ ] 02-01: TBD during /paul:plan
+- [x] 02-01: AI SDK + /api/analyze backend (Vercel AI SDK · DesignExtraction Zod · generateObject) — 2026-03-28
+- [x] 02-02: Analyze tab UI (image upload widget · schema viewer · loading state) — 2026-03-28
 
 ---
 

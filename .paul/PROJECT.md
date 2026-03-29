@@ -14,7 +14,7 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 |-----------|-------|
 | Type | Application |
 | Version | 0.1.0-dev |
-| Status | Foundation complete — Phase 2 ready |
+| Status | Agent A complete — Phase 3 ready |
 | Last Updated | 2026-03-28 |
 
 **Repository:** https://github.com/workcr/Design-Prompt-Generator
@@ -40,12 +40,15 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 - ✓ **File upload endpoint** — POST `/api/upload`, image/* only, ≤10MB, UUID filenames, saves to `uploads/` — Phase 1
 - ✓ **Project dashboard** — live list, create, open, delete at `/` — Phase 1
 - ✓ **Workspace shell** — `/projects/[id]` with Analyze/Blueprint/Prompt/Output tab scaffold — Phase 1
+- ✓ **AI provider factory** — `src/lib/ai.ts` with `getVisionProvider()`, switches Ollama/Gemini via `LOCAL_MODE` — Phase 2
+- ✓ **DesignExtraction schema** — `src/lib/schemas/design-extraction.ts`, 7 sub-schemas (Frame, Palette, Layout, TextFields, TypeScale, VisualElement, DesignExtraction) + `DESIGN_ANALYSIS_PROMPT` — Phase 2
+- ✓ **Agent A — /api/analyze** — POST endpoint: validates → reads image → `generateObject()` → persists to `design_schemas` → returns `{ id, schema }` — Phase 2
+- ✓ **Analyze tab UI** — Upload widget (drop zone + browse), 6-state machine, schema viewer with color swatches — Phase 2
 
 ### Active (In Progress)
 None.
 
 ### Planned (Next)
-- [ ] Phase 2: Agent A — image → design schema
 - [ ] Phase 3: Agent B1 — prompts → grammar blueprint
 - [ ] Phase 4: Structured Prompt Editor
 - [ ] Phase 5: Agent B2 + prompt export panel
@@ -115,6 +118,13 @@ Local-first development using Ollama for free inference; production swaps to Gem
 | Server components call `getDb()` directly | No HTTP round-trip needed for server-rendered pages; client components use fetch | 2026-03-28 | Active |
 | `Link + buttonVariants()` for styled anchors | `@base-ui/react` Button has no `asChild` — use CVA classes directly on Link | 2026-03-28 | Active |
 | `allowedDevOrigins` for LAN dev access | Next.js 16 blocks `/_next/*` from non-localhost by default; needed for network preview | 2026-03-28 | Active |
+| `@ai-sdk/openai` for Ollama (not `@ai-sdk/ollama`) | `@ai-sdk/ollama` doesn't exist on npm; Ollama exposes OpenAI-compat API at `/v1` — use `createOpenAI({ baseURL: "…/v1" })` | 2026-03-28 | Active |
+| Provider factory in `src/lib/ai.ts` | Routes never import from AI SDK directly — single swap point for future model changes | 2026-03-28 | Active |
+| Raw Buffer to AI SDK (not base64 data URL) | SDK handles image encoding internally; cleaner interface, no size inflation | 2026-03-28 | Active |
+| 16-char SHA-256 as `style_checksum` | Fast equality check for schema deduplication without full JSON comparison | 2026-03-28 | Active |
+| 6-state `Phase` type in AnalyzeTab | Eliminates impossible boolean flag combos; each render branch is exhaustive | 2026-03-28 | Active |
+| `parseDbSchema()` at display layer | DB TEXT → typed object boundary explicit in component, matching serialization-at-API-layer decision | 2026-03-28 | Active |
+| `style_summary` from `raw_analysis` JSON | No dedicated column; parsed from full extraction JSON — migration deferred to Phase 7 | 2026-03-28 | Active |
 
 ## Success Metrics
 
@@ -154,4 +164,4 @@ Local-first development using Ollama for free inference; production swaps to Gem
 
 ---
 *PROJECT.md — Updated when requirements or context change*
-*Last updated: 2026-03-28 after Phase 1 (Foundation)*
+*Last updated: 2026-03-28 after Phase 2 (Agent A — Design Schema Extraction)*

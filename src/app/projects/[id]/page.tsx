@@ -9,6 +9,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import type { Project } from "@/types/db"
+import AnalyzeTab from "./analyze-tab"
 
 type PageProps = { params: Promise<{ id: string }> }
 
@@ -58,10 +59,7 @@ export default async function WorkspacePage({ params }: PageProps) {
           </TabsList>
 
           <TabsContent value="analyze">
-            <PlaceholderTab
-              phase="Phase 2"
-              description="Upload a reference image to extract its design schema — frame, palette, layout, type scale, and elements."
-            />
+            <AnalyzeTab projectId={id} />
           </TabsContent>
 
           <TabsContent value="blueprint">

@@ -7,8 +7,8 @@
     "status": "in_progress"
   },
   "phase": {
-    "number": 2,
-    "name": "Agent A — Design Schema Extraction",
+    "number": 3,
+    "name": "Agent B1 — Grammar Blueprint Distillation",
     "status": "not_started"
   },
   "loop": {
@@ -17,7 +17,7 @@
   },
   "timestamps": {
     "created_at": "2026-03-28T00:00:00Z",
-    "updated_at": "2026-03-28T02:00:00Z"
+    "updated_at": "2026-03-28T04:00:00Z"
   },
   "satellite": {
     "groom": true
