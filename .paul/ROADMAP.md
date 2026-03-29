@@ -8,7 +8,7 @@ Eight phases take the project from a bare Next.js scaffold to a deployed, authen
 
 **v0.1 — Local Pipeline MVP** (v0.1.0)
 Status: In progress
-Phases: 4 of 8 complete
+Phases: 5 of 8 complete
 
 ## Phases
 
@@ -18,7 +18,7 @@ Phases: 4 of 8 complete
 | 2 | Agent A — Design Schema Extraction | 2 | ✅ Complete | 2026-03-28 |
 | 3 | Agent B1 — Grammar Blueprint Distillation | 2 | ✅ Complete | 2026-03-28 |
 | 4 | Structured Prompt Editor | 2 | ✅ Complete | 2026-03-29 |
-| 5 | Agent B2 + Prompt Export Panel | TBD | Not started | - |
+| 5 | Agent B2 + Prompt Export Panel | 3 | ✅ Complete | 2026-03-29 |
 | 6 | Image Generation + Comparison | TBD | Not started | - |
 | 7 | Polish + Local-First UX | TBD | Not started | - |
 | 8 | Production Deploy | TBD | Not started | - |
@@ -118,7 +118,9 @@ Phases: 4 of 8 complete
 - PromptOutput saved to DB
 
 **Plans:**
-- [ ] 05-01: TBD during /paul:plan
+- [x] 05-01: Agent B2 Backend (/api/rewrite streaming · B2_REWRITE_SYSTEM_PROMPT · buildRewriteInput · prompt_outputs save) — 2026-03-29
+- [x] 05-02: Generation UI (GET /api/blueprints · blueprint selector · Generate button · streaming display · outputId state) — 2026-03-29
+- [x] 05-03: Export Panel (platform presets · MJ v7 suffix · AR selector · clipboard copy · char/token count) — 2026-03-29
 
 ---
 
@@ -180,4 +182,4 @@ Phases: 4 of 8 complete
 
 ---
 *Roadmap created: 2026-03-28*
-*Last updated: 2026-03-29*
+*Last updated: 2026-03-29 — Phase 5 complete*

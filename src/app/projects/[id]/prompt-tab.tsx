@@ -13,6 +13,34 @@ import type { DesignSchema } from "@/types/db"
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Phase = "loading" | "empty" | "ready" | "saving" | "error"
+type GenerationPhase = "idle" | "generating" | "complete" | "error"
+type Platform = "plain" | "midjourney" | "freepik" | "higgsfield"
+
+interface BlueprintOption {
+  id: string
+  name: string | null
+  created_at: string
+}
+
+interface PlatformPreset {
+  id: Platform
+  label: string
+  note: string
+}
+
+const PLATFORM_PRESETS: PlatformPreset[] = [
+  { id: "plain",      label: "Plain Text",    note: "" },
+  { id: "midjourney", label: "Midjourney v7", note: "" },
+  { id: "freepik",    label: "Freepik",       note: "Natural language — no suffix needed" },
+  { id: "higgsfield", label: "Higgsfield AI", note: "Natural language motion prompt — no suffix needed" },
+]
+
+const MJ_ASPECT_RATIOS = ["1:1", "4:3", "3:2", "16:9", "9:16", "2:3"] as const
+
+function formatPromptForPlatform(base: string, platform: Platform, ar: string): string {
+  if (platform === "midjourney") return `${base} --v 7 --ar ${ar}`
+  return base
+}
 
 interface EditableSchema {
   id: string
@@ -58,6 +86,19 @@ export default function PromptTab({ projectId }: { projectId: string }) {
   const [originalLocked, setOriginalLocked] = useState<string[]>([])
   const [errorMsg, setErrorMsg] = useState("")
 
+  // ── Generation state ──────────────────────────────────────────────────────
+  const [blueprints, setBlueprints] = useState<BlueprintOption[]>([])
+  const [selectedBlueprintId, setSelectedBlueprintId] = useState<string | null>(null)
+  const [generationPhase, setGenerationPhase] = useState<GenerationPhase>("idle")
+  const [promptText, setPromptText] = useState("")
+  const [outputId, setOutputId] = useState<string | null>(null)
+  const [generationError, setGenerationError] = useState("")
+
+  // ── Export state ───────────────────────────────────────────────────────────
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform>("plain")
+  const [mjAspectRatio, setMjAspectRatio] = useState("16:9")
+  const [copied, setCopied] = useState(false)
+
   const isDirty =
     JSON.stringify(schema) !== JSON.stringify(original) ||
     JSON.stringify(lockedFields) !== JSON.stringify(originalLocked)
@@ -90,9 +131,25 @@ export default function PromptTab({ projectId }: { projectId: string }) {
       setLockedFields(locks)
       setOriginalLocked(locks)
       setPhase("ready")
+      void loadBlueprints()
     } catch {
       setErrorMsg("Failed to load schema. Check the dev server.")
       setPhase("error")
+    }
+  }
+
+  async function loadBlueprints() {
+    try {
+      const res = await fetch(`/api/blueprints?projectId=${projectId}`)
+      if (!res.ok) return
+      const data = (await res.json()) as BlueprintOption[]
+      setBlueprints(data)
+      const first = data[0]
+      if (first) {
+        setSelectedBlueprintId(first.id)
+      }
+    } catch {
+      // non-blocking — generation panel will show appropriate state
     }
   }
 
@@ -141,6 +198,75 @@ export default function PromptTab({ projectId }: { projectId: string }) {
     } catch {
       setErrorMsg("Save failed. Check the dev server.")
       setPhase("ready")
+    }
+  }
+
+  async function generate() {
+    setGenerationPhase("generating")
+    setPromptText("")
+    setOutputId(null)
+    setGenerationError("")
+
+    try {
+      const res = await fetch("/api/rewrite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId,
+          ...(selectedBlueprintId ? { blueprintId: selectedBlueprintId } : {}),
+        }),
+      })
+
+      if (!res.ok || !res.body) {
+        const data = (await res.json()) as { error?: string }
+        setGenerationError(data.error ?? "Generation failed.")
+        setGenerationPhase("error")
+        return
+      }
+
+      // Capture X-Output-Id before consuming body
+      const id = res.headers.get("X-Output-Id")
+      if (id) setOutputId(id)
+
+      // Stream body as plain text
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        setPromptText((prev) => prev + chunk)
+      }
+
+      setGenerationPhase("complete")
+    } catch {
+      setGenerationError("Generation failed. Check the dev server.")
+      setGenerationPhase("error")
+    }
+  }
+
+  async function copyPrompt(text: string) {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // Fallback for environments where the async clipboard API is unavailable
+      try {
+        const el = document.createElement("textarea")
+        el.value = text
+        el.style.position = "fixed"
+        el.style.opacity = "0"
+        document.body.appendChild(el)
+        el.focus()
+        el.select()
+        document.execCommand("copy")
+        document.body.removeChild(el)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      } catch {
+        // Both methods failed — silently ignore
+      }
     }
   }
 
@@ -561,6 +687,170 @@ export default function PromptTab({ projectId }: { projectId: string }) {
           </div>
         )}
       </EditorCard>
+
+      <Separator />
+
+      {/* ── Generation panel ─────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Generate Prompt</h3>
+        </div>
+
+        {blueprints.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+            No grammar blueprint found. Run the{" "}
+            <span className="font-medium">Blueprint</span> tab first to distil a
+            writing style.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {/* Blueprint selector — only shown when multiple blueprints exist */}
+            {blueprints.length > 1 && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-muted-foreground">Blueprint</label>
+                <select
+                  value={selectedBlueprintId ?? ""}
+                  onChange={(e) => setSelectedBlueprintId(e.target.value)}
+                  disabled={generationPhase === "generating"}
+                  className="h-9 rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
+                >
+                  {blueprints.map((bp) => (
+                    <option key={bp.id} value={bp.id}>
+                      {bp.name ?? `Blueprint (${bp.created_at.slice(0, 10)})`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Single blueprint info — no dropdown needed */}
+            {blueprints.length === 1 && (() => {
+              const bp = blueprints[0]
+              if (!bp) return null
+              return (
+                <p className="text-xs text-muted-foreground">
+                  Using:{" "}
+                  <span className="font-medium text-foreground">
+                    {bp.name ?? `Blueprint (${bp.created_at.slice(0, 10)})`}
+                  </span>
+                </p>
+              )
+            })()}
+
+            <Button
+              onClick={() => void generate()}
+              disabled={generationPhase === "generating" || !selectedBlueprintId}
+              className="self-start"
+            >
+              {generationPhase === "generating" ? "Generating…" : "Generate"}
+            </Button>
+          </div>
+        )}
+
+        {/* Prompt output display */}
+        {(generationPhase === "generating" ||
+          generationPhase === "complete" ||
+          (generationPhase === "error" && promptText.length > 0)) && (
+          <div className="flex flex-col gap-2">
+            <div className="min-h-24 rounded-md border bg-muted/30 p-3 font-mono text-sm leading-relaxed whitespace-pre-wrap">
+              {promptText}
+              {generationPhase === "generating" && (
+                <span className="inline-block h-3 w-1 animate-pulse bg-foreground/60 align-middle" />
+              )}
+            </div>
+            {outputId && (
+              <p className="text-xs text-muted-foreground">
+                Output ID: <span className="font-mono">{outputId}</span>
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Export panel — only when generation is complete */}
+        {generationPhase === "complete" && promptText && (() => {
+          const formatted = formatPromptForPlatform(promptText, selectedPlatform, mjAspectRatio)
+          const charCount = formatted.length
+          const tokenEst = Math.ceil(charCount / 4)
+
+          return (
+            <div className="flex flex-col gap-3 rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Export
+                </h4>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{charCount.toLocaleString()} chars</span>
+                  <span>·</span>
+                  <span>~{tokenEst.toLocaleString()} tokens (est.)</span>
+                </div>
+              </div>
+
+              {/* Platform selector */}
+              <div className="flex flex-wrap gap-1.5">
+                {PLATFORM_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => setSelectedPlatform(preset.id)}
+                    className={[
+                      "rounded-md border px-3 py-1 text-xs font-medium transition-colors",
+                      selectedPlatform === preset.id
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground",
+                    ].join(" ")}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* MJ aspect ratio selector */}
+              {selectedPlatform === "midjourney" && (
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground">Aspect ratio</label>
+                  <select
+                    value={mjAspectRatio}
+                    onChange={(e) => setMjAspectRatio(e.target.value)}
+                    className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+                  >
+                    {MJ_ASPECT_RATIOS.map((ar) => (
+                      <option key={ar} value={ar}>{ar}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Platform note */}
+              {(() => {
+                const preset = PLATFORM_PRESETS.find((p) => p.id === selectedPlatform)
+                if (!preset?.note) return null
+                return (
+                  <p className="text-xs text-muted-foreground">{preset.note}</p>
+                )
+              })()}
+
+              {/* Formatted prompt display */}
+              <div className="select-all rounded-md border bg-muted/30 p-3 font-mono text-sm leading-relaxed whitespace-pre-wrap">
+                {formatted}
+              </div>
+
+              {/* Copy button */}
+              <Button
+                size="sm"
+                variant="outline"
+                className="self-start"
+                onClick={() => void copyPrompt(formatted)}
+              >
+                {copied ? "Copied!" : "Copy"}
+              </Button>
+            </div>
+          )
+        })()}
+
+        {/* Generation error */}
+        {generationPhase === "error" && generationError && (
+          <p className="text-xs text-destructive">{generationError}</p>
+        )}
+      </div>
     </div>
   )
 }

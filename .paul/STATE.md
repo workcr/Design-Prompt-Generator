@@ -5,30 +5,31 @@
 See: .paul/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Convert any image into a fully controllable, style-aware image-gen prompt — without losing structural design logic or writing quality
-**Current focus:** Phase 5 — Agent B2 + Prompt Export Panel
+**Current focus:** Phase 6 — Image Generation + Comparison
 
 ## Current Position
 
 Milestone: v0.1 — Local Pipeline MVP
-Phase: 5 of 8 (Agent B2 + Prompt Export Panel) — Not started
+Phase: 6 of 8 (Image Generation + Comparison) — Not started
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-03-29 — Phase 4 complete, transitioned to Phase 5
+Last activity: 2026-03-29 — Phase 5 complete, transitioned to Phase 6
 
 Progress:
-- Milestone: [█████░░░░░] 50%
+- Milestone: [██████░░░░] 62%
 - Phase 1:   [██████████] 100% ✅
 - Phase 2:   [██████████] 100% ✅
 - Phase 3:   [██████████] 100% ✅
 - Phase 4:   [██████████] 100% ✅
-- Phase 5:   [░░░░░░░░░░] 0%
+- Phase 5:   [██████████] 100% ✅
+- Phase 6:   [░░░░░░░░░░] 0%
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ○        ○        ○     [Ready to plan Phase 5]
+  ○        ○        ○     [Phase 6 — ready to plan]
 ```
 
 ## Accumulated Context
@@ -51,6 +52,12 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | `isDirty` via JSON.stringify comparison | 04-02 | Simple whole-schema dirty tracking; reset = setOriginal(schema) |
 | `NonNullable<T>["field"]` for nullable Zod type index | 04-02 | Pattern for all future nullable Zod field type casts |
 | Text Fields + Elements display-only in editor | 04-02 | Array content editing deferred to Phase 7 Polish |
+| `toTextStreamResponse()` not `toDataStreamResponse()` | 05-01 | AI SDK v6 API for plain text streams — all future streaming routes |
+| `GrammarBlueprintExtraction["sequence_pattern"]` indexed type | 05-01 | Access unexported nested types without new exports |
+| Pre-generate UUID → X-Output-Id header | 05-01 | Client has DB record ID before stream ends; onFinish writes the row |
+| GET /api/blueprints returns minimal fields only | 05-02 | id, name, created_at — no raw_prompts exposed; lean payload pattern |
+| Native `<select>` styled with Input tokens | 05-02 | No shadcn Select dependency; consistent with existing form elements |
+| noUncheckedIndexedAccess: extract array[n] to const | 05-02 | Guard pattern for all future array element access in strict TS |
 
 Decisions imported from PLANNING.md at init:
 
@@ -62,9 +69,8 @@ Decisions imported from PLANNING.md at init:
 
 ### Git State
 
-Last commit: 3a75bea (Phase 3)
+Last commit: 64cd189 (Phase 4)
 Branch: main
-Phase 4 commit: pending
 
 ### Deferred Issues
 
@@ -73,10 +79,10 @@ Phase 4 commit: pending
 | cogvlm2:10b vs qwen3-vl:30b benchmark | PLANNING.md | S | Phase 2 ← still open |
 | Blueprint granularity (3/5/10 prompts) | PLANNING.md | S | Phase 3 ← still open |
 | Full pipeline cost estimate (<$0.20 target) | PLANNING.md | S | Phase 8 |
-| Platform prompt format syntax (MJ v7, Freepik, Higgsfield) | PLANNING.md | S | Phase 5 |
+| ~~Platform prompt format syntax (MJ v7, Freepik, Higgsfield)~~ | PLANNING.md | S | ✅ Resolved Phase 5 |
 | `style_summary` dedicated DB column | 02-02 | S | Phase 7 (Polish) |
 | Grammar sub-fields dedicated DB columns | 03-02 | S | Phase 7 (Polish) |
-| Blueprint selection UI (which blueprint to use) | 03-02 | M | Phase 5 |
+| ~~Blueprint selection UI (which blueprint to use)~~ | 03-02 | M | ✅ Resolved Phase 5 |
 | Text Fields + Elements per-item editing | 04-02 | M | Phase 7 (Polish) |
 
 ### Blockers/Concerns
@@ -85,8 +91,8 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-29
-Stopped at: Phase 4 complete — transition done
-Next action: Run /paul:plan for Phase 5 (Agent B2 + Prompt Export Panel)
+Stopped at: Phase 5 complete, ready to plan Phase 6
+Next action: Run /paul:plan for Phase 6 (Image Generation + Comparison)
 Resume context: .paul/ROADMAP.md
 
 ---

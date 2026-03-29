@@ -14,7 +14,7 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 |-----------|-------|
 | Type | Application |
 | Version | 0.1.0-dev |
-| Status | Structured Prompt Editor complete — Phase 5 ready |
+| Status | Agent B2 + Export Panel complete — Phase 6 ready |
 | Last Updated | 2026-03-29 |
 
 **Repository:** https://github.com/workcr/Design-Prompt-Generator
@@ -50,12 +50,16 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 - ✓ **Blueprint tab UI** — Prompt textarea (one per line, live count), 4-state machine, grammar blueprint viewer with 5 sections — Phase 3
 - ✓ **Schema API routes** — GET `/api/schemas?projectId=X` (latest schema for project), PATCH `/api/schemas/[id]` (partial field updates + locked_fields, all 6 JSON columns, RETURNING *) — Phase 4
 - ✓ **Structured Prompt Editor** — `PromptTab` client component: 5-state machine, editable Frame/Palette/Layout/Typography fields, color pickers for palette, per-section lock toggles with locked badge, amber modified dot, save button → PATCH with dirty reset — Phase 4
+- ✓ **Agent B2 — /api/rewrite** — POST streaming endpoint: validates → loads schema + blueprint (by ID or latest) → parses locked_fields → `streamText()` → `onFinish` saves to `prompt_outputs` → returns SSE stream with `X-Output-Id` header — Phase 5
+- ✓ **B2 system prompt + input builder** — `B2_REWRITE_SYSTEM_PROMPT` (7 rules) + `buildRewriteInput()` serialises 6 schema sections as LOCKED/unlocked + full grammar blueprint sub-fields — Phase 5
+- ✓ **Blueprint selector API** — GET `/api/blueprints?projectId=X` returns `{ id, name, created_at }[]` ordered by created_at DESC — Phase 5
+- ✓ **Generation UI** — blueprint selector (pre-selects latest), Generate button, streaming prompt display with blink cursor, Output ID label — Phase 5
+- ✓ **Prompt Export Panel** — platform presets (Plain Text / Midjourney v7 `--v 7 --ar` / Freepik / Higgsfield AI), aspect ratio selector, formatted prompt display, clipboard copy with execCommand fallback, character count + token estimate — Phase 5
 
 ### Active (In Progress)
 None.
 
 ### Planned (Next)
-- [ ] Phase 5: Agent B2 + prompt export panel
 - [ ] Phase 6: Image generation + comparison
 - [ ] Phase 7: Polish + local-first UX
 - [ ] Phase 8: Production deploy (Vercel + Supabase + auth)
@@ -135,6 +139,11 @@ Local-first development using Ollama for free inference; production swaps to Gem
 | `isDirty` via `JSON.stringify` comparison | No per-field dirty map needed — whole-schema comparison is simple and sufficient; reset is `setOriginal(schema)` | 2026-03-29 | Active |
 | `NonNullable<T>["field"]` for nullable Zod type index | `DesignExtraction["type_scale"]` is `TypeScaleType \| null` (Zod `.nullable()`); direct index fails strict TS — wrap with NonNullable<> | 2026-03-29 | Active |
 | Text Fields + Elements display-only in editor | Per-item array editing adds significant complexity; lock/unlock is sufficient for Phase 4 — content editing deferred to Phase 7 | 2026-03-29 | Active |
+| `toTextStreamResponse()` not `toDataStreamResponse()` | AI SDK v6 API for plain text streams — `toDataStreamResponse()` is for structured JSON streams only | 2026-03-29 | Active |
+| `GrammarBlueprintExtraction["sequence_pattern"]` indexed type | Access unexported nested Zod types via indexed access — avoids adding new exports to stable files | 2026-03-29 | Active |
+| Pre-generate UUID → X-Output-Id header | Client receives DB record ID before stream ends; `onFinish` writes the row with the known ID | 2026-03-29 | Active |
+| Client-side `formatPromptForPlatform()` | No server round-trip for export formatting; pure function; all platform logic co-located | 2026-03-29 | Active |
+| Clipboard `navigator.clipboard` + `execCommand` fallback | `navigator.clipboard` throws silently in some dev/non-HTTPS contexts; execCommand ensures copy works everywhere | 2026-03-29 | Active |
 
 ## Success Metrics
 
@@ -174,4 +183,4 @@ Local-first development using Ollama for free inference; production swaps to Gem
 
 ---
 *PROJECT.md — Updated when requirements or context change*
-*Last updated: 2026-03-29 after Phase 4 (Structured Prompt Editor)*
+*Last updated: 2026-03-29 after Phase 5 (Agent B2 + Prompt Export Panel)*
