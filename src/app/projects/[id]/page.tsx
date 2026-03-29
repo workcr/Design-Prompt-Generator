@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/tabs"
 import type { Project } from "@/types/db"
 import AnalyzeTab from "./analyze-tab"
+import BlueprintTab from "./blueprint-tab"
 
 type PageProps = { params: Promise<{ id: string }> }
 
@@ -63,10 +64,7 @@ export default async function WorkspacePage({ params }: PageProps) {
           </TabsContent>
 
           <TabsContent value="blueprint">
-            <PlaceholderTab
-              phase="Phase 3"
-              description="Paste reference prompts from your target prompt family to distill a reusable grammar blueprint."
-            />
+            <BlueprintTab projectId={id} />
           </TabsContent>
 
           <TabsContent value="prompt">

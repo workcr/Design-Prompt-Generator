@@ -8,7 +8,7 @@ Eight phases take the project from a bare Next.js scaffold to a deployed, authen
 
 **v0.1 — Local Pipeline MVP** (v0.1.0)
 Status: In progress
-Phases: 2 of 8 complete
+Phases: 3 of 8 complete
 
 ## Phases
 
@@ -16,7 +16,7 @@ Phases: 2 of 8 complete
 |-------|------|-------|--------|-----------|
 | 1 | Foundation | 3 | ✅ Complete | 2026-03-28 |
 | 2 | Agent A — Design Schema Extraction | 2 | ✅ Complete | 2026-03-28 |
-| 3 | Agent B1 — Grammar Blueprint Distillation | TBD | Not started | - |
+| 3 | Agent B1 — Grammar Blueprint Distillation | 2 | ✅ Complete | 2026-03-28 |
 | 4 | Structured Prompt Editor | TBD | Not started | - |
 | 5 | Agent B2 + Prompt Export Panel | TBD | Not started | - |
 | 6 | Image Generation + Comparison | TBD | Not started | - |
@@ -79,7 +79,8 @@ Phases: 2 of 8 complete
 - Blueprint save + library view
 
 **Plans:**
-- [ ] 03-01: TBD during /paul:plan
+- [x] 03-01: Grammar Blueprint backend (getTextProvider · GrammarBlueprintExtractionSchema · /api/distill) — 2026-03-28
+- [x] 03-02: Blueprint tab UI (prompt textarea · distill button · grammar viewer) — 2026-03-28
 
 ---
 

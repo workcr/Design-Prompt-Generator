@@ -14,7 +14,7 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 |-----------|-------|
 | Type | Application |
 | Version | 0.1.0-dev |
-| Status | Agent A complete — Phase 3 ready |
+| Status | Agent B1 complete — Phase 4 ready |
 | Last Updated | 2026-03-28 |
 
 **Repository:** https://github.com/workcr/Design-Prompt-Generator
@@ -44,12 +44,15 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 - ✓ **DesignExtraction schema** — `src/lib/schemas/design-extraction.ts`, 7 sub-schemas (Frame, Palette, Layout, TextFields, TypeScale, VisualElement, DesignExtraction) + `DESIGN_ANALYSIS_PROMPT` — Phase 2
 - ✓ **Agent A — /api/analyze** — POST endpoint: validates → reads image → `generateObject()` → persists to `design_schemas` → returns `{ id, schema }` — Phase 2
 - ✓ **Analyze tab UI** — Upload widget (drop zone + browse), 6-state machine, schema viewer with color swatches — Phase 2
+- ✓ **Text provider factory** — `getTextProvider()` in `src/lib/ai.ts`, switches Ollama/OpenAI via `LOCAL_MODE` — Phase 3
+- ✓ **GrammarBlueprint schema** — `src/lib/schemas/grammar-blueprint.ts`, 9-field Zod schema (SequencePattern, density, avg_length, compression, sentence structure, qualifier placement, characteristic phrases, style vocab, summary) + `GRAMMAR_DISTILLATION_PROMPT` — Phase 3
+- ✓ **Agent B1 — /api/distill** — POST endpoint: validates → `generateObject()` with text model → persists to `grammar_blueprints` → returns `{ id, blueprint }` — Phase 3
+- ✓ **Blueprint tab UI** — Prompt textarea (one per line, live count), 4-state machine, grammar blueprint viewer with 5 sections — Phase 3
 
 ### Active (In Progress)
 None.
 
 ### Planned (Next)
-- [ ] Phase 3: Agent B1 — prompts → grammar blueprint
 - [ ] Phase 4: Structured Prompt Editor
 - [ ] Phase 5: Agent B2 + prompt export panel
 - [ ] Phase 6: Image generation + comparison
@@ -125,6 +128,8 @@ Local-first development using Ollama for free inference; production swaps to Gem
 | 6-state `Phase` type in AnalyzeTab | Eliminates impossible boolean flag combos; each render branch is exhaustive | 2026-03-28 | Active |
 | `parseDbSchema()` at display layer | DB TEXT → typed object boundary explicit in component, matching serialization-at-API-layer decision | 2026-03-28 | Active |
 | `style_summary` from `raw_analysis` JSON | No dedicated column; parsed from full extraction JSON — migration deferred to Phase 7 | 2026-03-28 | Active |
+| `idle` + `error` merged in BlueprintTab | Textarea preserved on error — splitting branches would require duplicating the entire form | 2026-03-28 | Active |
+| Grammar sub-fields in `distilled_grammar` JSON | sentence_structure, qualifier_placement, characteristic_phrases, style_vocabulary, summary have no dedicated DB columns — deferred migration to Phase 7 | 2026-03-28 | Active |
 
 ## Success Metrics
 
@@ -164,4 +169,4 @@ Local-first development using Ollama for free inference; production swaps to Gem
 
 ---
 *PROJECT.md — Updated when requirements or context change*
-*Last updated: 2026-03-28 after Phase 2 (Agent A — Design Schema Extraction)*
+*Last updated: 2026-03-28 after Phase 3 (Agent B1 — Grammar Blueprint Distillation)*
