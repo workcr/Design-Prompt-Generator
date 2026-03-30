@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 import { Badge } from "@/components/ui/badge"
 import {
   Tabs,
@@ -19,9 +19,12 @@ type PageProps = { params: Promise<{ id: string }> }
 export default async function WorkspacePage({ params }: PageProps) {
   const { id } = await params
 
-  const project = getDb()
-    .prepare("SELECT * FROM projects WHERE id = ?")
-    .get(id) as Project | undefined
+  const supabase = getSupabaseServer()
+  const { data: project } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", id)
+    .single()
 
   if (!project) {
     redirect("/")
