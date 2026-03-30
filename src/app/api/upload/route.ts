@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
 import crypto from "crypto"
+import { getSupabaseServer } from "@/lib/supabase-server"
 
 const MAX_SIZE = 10 * 1024 * 1024 // 10MB
-
-const UPLOADS_DIR = path.join(process.cwd(), "uploads")
 
 export async function POST(request: Request) {
   try {
@@ -30,17 +27,24 @@ export async function POST(request: Request) {
       )
     }
 
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true })
-
     const ext = file.name.split(".").pop() ?? "bin"
     const filename = `${crypto.randomUUID()}.${ext}`
-    const filePath = path.join(UPLOADS_DIR, filename)
-
     const buffer = Buffer.from(await file.arrayBuffer())
-    fs.writeFileSync(filePath, buffer)
+
+    const supabase = getSupabaseServer()
+    const { error: uploadError } = await supabase.storage
+      .from("uploads")
+      .upload(filename, buffer, { contentType: file.type, upsert: false })
+
+    if (uploadError) throw uploadError
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("uploads")
+      .getPublicUrl(filename)
 
     return NextResponse.json({
       filename,
+      url: publicUrl,
       path: `uploads/${filename}`,
       size: file.size,
       type: file.type,

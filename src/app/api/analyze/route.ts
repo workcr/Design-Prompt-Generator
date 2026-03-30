@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { generateObject } from "ai"
-import fs from "fs"
-import path from "path"
 import crypto from "crypto"
 import { getSupabaseServer } from "@/lib/supabase-server"
 import { getVisionProvider } from "@/lib/ai"
@@ -42,12 +40,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
-    // 3. Read image from uploads/
-    const filePath = path.join(process.cwd(), "uploads", filename)
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: "Image file not found" }, { status: 404 })
+    // 3. Download image from Supabase Storage
+    const { data: blob, error: downloadError } = await supabase.storage
+      .from("uploads")
+      .download(filename)
+
+    if (downloadError || !blob) {
+      return NextResponse.json({ error: "Image file not found in storage" }, { status: 404 })
     }
-    const imageBuffer = fs.readFileSync(filePath)
+
+    const imageBuffer = Buffer.from(await blob.arrayBuffer())
 
     // 4. Run structured extraction via AI SDK
     const { object: extraction } = await generateObject({

@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import fs from "fs"
-import path from "path"
 import crypto from "crypto"
 import { getSupabaseServer } from "@/lib/supabase-server"
 import { getImageGenProvider, env } from "@/lib/env"
@@ -60,7 +58,9 @@ export async function POST(request: Request) {
     const finalPrompt = promptOutput.final_prompt
     const provider = getImageGenProvider()
 
-    let url: string
+    let imgBuffer: Buffer
+    let genFilename: string
+    let contentType: string
     let model: string
 
     if (provider === "nano_banana_2") {
@@ -87,12 +87,10 @@ export async function POST(request: Request) {
       if (!firstCandidate) throw new Error("Gemini returned no candidates")
       const imagePart = firstCandidate.content.parts.find((p) => p.inlineData)
       if (!imagePart?.inlineData) throw new Error("Gemini returned no image data")
-      const ext = imagePart.inlineData.mimeType.includes("png") ? ".png" : ".jpg"
-      const genFilename = `gen-${crypto.randomUUID()}${ext}`
-      const genPath = path.join(process.cwd(), "uploads", genFilename)
-      fs.mkdirSync(path.dirname(genPath), { recursive: true })
-      fs.writeFileSync(genPath, Buffer.from(imagePart.inlineData.data, "base64"))
-      url = `/api/uploads/${genFilename}`
+      const ext = imagePart.inlineData.mimeType.includes("png") ? "png" : "jpg"
+      contentType = imagePart.inlineData.mimeType.includes("png") ? "image/png" : "image/jpeg"
+      genFilename = `gen-${crypto.randomUUID()}.${ext}`
+      imgBuffer = Buffer.from(imagePart.inlineData.data, "base64")
       model = "gemini-2.5-flash-image"
     } else {
       // 3b. Replicate — REST API with Prefer: wait (synchronous prediction)
@@ -121,29 +119,38 @@ export async function POST(request: Request) {
       }
       const firstOutput = replicateData.output[0]
       if (!firstOutput) throw new Error("Replicate returned empty output")
-      // Download and persist — Replicate URLs expire after ~24h
+      // Download from Replicate — URLs expire after ~24h
       const imgResponse = await fetch(firstOutput)
-      const imgBuffer = Buffer.from(await imgResponse.arrayBuffer())
-      const genFilename = `gen-${crypto.randomUUID()}.webp`
-      fs.mkdirSync(path.join(process.cwd(), "uploads"), { recursive: true })
-      fs.writeFileSync(path.join(process.cwd(), "uploads", genFilename), imgBuffer)
-      url = `/api/uploads/${genFilename}`
+      imgBuffer = Buffer.from(await imgResponse.arrayBuffer())
+      contentType = "image/webp"
+      genFilename = `gen-${crypto.randomUUID()}.webp`
       model = "flux-schnell"
     }
 
-    // 4. Save to generated_images
+    // 4. Upload to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from("uploads")
+      .upload(genFilename, imgBuffer, { contentType, upsert: false })
+
+    if (uploadError) throw uploadError
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("uploads")
+      .getPublicUrl(genFilename)
+
+    // 5. Save to generated_images with Supabase Storage public URL
     const imageId = crypto.randomUUID()
     const { error } = await supabase.from("generated_images").insert({
       id:               imageId,
       prompt_output_id: outputId,
       provider:         provider,
       model:            model,
-      url:              url,
+      url:              publicUrl,
       status:           "complete",
     })
     if (error) throw error
 
-    return NextResponse.json({ id: imageId, url, provider })
+    return NextResponse.json({ id: imageId, url: publicUrl, provider })
   } catch (error) {
     console.error("[POST /api/generate]", error)
     return NextResponse.json({ error: "Image generation failed" }, { status: 500 })
