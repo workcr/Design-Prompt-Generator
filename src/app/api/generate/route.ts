@@ -3,7 +3,7 @@ import { z } from "zod"
 import fs from "fs"
 import path from "path"
 import crypto from "crypto"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 import { getImageGenProvider, env } from "@/lib/env"
 import type { PromptOutput } from "@/types/db"
 
@@ -40,20 +40,24 @@ export async function POST(request: Request) {
     }
 
     const { outputId } = parsed.data
-    const db = getDb()
+    const supabase = getSupabaseServer()
 
     // 2. Load prompt output
-    const output = db
-      .prepare("SELECT * FROM prompt_outputs WHERE id = ?")
-      .get(outputId) as PromptOutput | undefined
+    const { data: output } = await supabase
+      .from("prompt_outputs")
+      .select("*")
+      .eq("id", outputId)
+      .single()
+
     if (!output) {
       return NextResponse.json({ error: "Prompt output not found" }, { status: 404 })
     }
-    if (!output.final_prompt) {
+    const promptOutput = output as PromptOutput
+    if (!promptOutput.final_prompt) {
       return NextResponse.json({ error: "Prompt output has no final_prompt" }, { status: 400 })
     }
 
-    const finalPrompt = output.final_prompt
+    const finalPrompt = promptOutput.final_prompt
     const provider = getImageGenProvider()
 
     let url: string
@@ -129,10 +133,15 @@ export async function POST(request: Request) {
 
     // 4. Save to generated_images
     const imageId = crypto.randomUUID()
-    db.prepare(
-      `INSERT INTO generated_images (id, prompt_output_id, provider, model, url, status)
-       VALUES (?, ?, ?, ?, ?, 'complete')`
-    ).run(imageId, outputId, provider, model, url)
+    const { error } = await supabase.from("generated_images").insert({
+      id:               imageId,
+      prompt_output_id: outputId,
+      provider:         provider,
+      model:            model,
+      url:              url,
+      status:           "complete",
+    })
+    if (error) throw error
 
     return NextResponse.json({ id: imageId, url, provider })
   } catch (error) {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 import type { Project } from "@/types/db"
 
 const CreateProjectSchema = z.object({
@@ -9,11 +9,14 @@ const CreateProjectSchema = z.object({
 
 export async function GET() {
   try {
-    const db = getDb()
-    const projects = db
-      .prepare("SELECT * FROM projects ORDER BY created_at DESC")
-      .all() as Project[]
-    return NextResponse.json(projects)
+    const supabase = getSupabaseServer()
+    const { data: projects, error } = await supabase
+      .from("projects")
+      .select("*")
+      .order("created_at", { ascending: false })
+
+    if (error) throw error
+    return NextResponse.json((projects ?? []) as Project[])
   } catch (error) {
     console.error("[GET /api/projects]", error)
     return NextResponse.json({ error: "Failed to fetch projects" }, { status: 500 })
@@ -32,16 +35,15 @@ export async function POST(request: Request) {
       )
     }
 
-    const db = getDb()
-    const project = db
-      .prepare(
-        `INSERT INTO projects (name)
-         VALUES (?)
-         RETURNING *`
-      )
-      .get(parsed.data.name) as Project
+    const supabase = getSupabaseServer()
+    const { data: project, error } = await supabase
+      .from("projects")
+      .insert({ name: parsed.data.name })
+      .select()
+      .single()
 
-    return NextResponse.json(project, { status: 201 })
+    if (error) throw error
+    return NextResponse.json(project as Project, { status: 201 })
   } catch (error) {
     console.error("[POST /api/projects]", error)
     return NextResponse.json({ error: "Failed to create project" }, { status: 500 })

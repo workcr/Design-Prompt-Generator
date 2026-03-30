@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 import type { DesignSchema } from "@/types/db"
 
 const PatchSchemaBody = z
@@ -31,9 +31,14 @@ const JSON_FIELDS = [
 export async function PATCH(request: Request, { params }: RouteContext) {
   try {
     const { id } = await params
-    const db = getDb()
+    const supabase = getSupabaseServer()
 
-    const exists = db.prepare("SELECT id FROM design_schemas WHERE id = ?").get(id)
+    const { data: exists } = await supabase
+      .from("design_schemas")
+      .select("id")
+      .eq("id", id)
+      .single()
+
     if (!exists) {
       return NextResponse.json({ error: "Schema not found" }, { status: 404 })
     }
@@ -47,31 +52,30 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       )
     }
 
-    const setClauses: string[] = []
-    const values: unknown[] = []
+    // Build update object — only include provided fields
+    const updateObj: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    }
 
     for (const field of JSON_FIELDS) {
       if (parsed.data[field] !== undefined) {
-        setClauses.push(`${field} = ?`)
-        values.push(JSON.stringify(parsed.data[field]))
+        updateObj[field] = JSON.stringify(parsed.data[field])
       }
     }
 
     if (parsed.data.locked_fields !== undefined) {
-      setClauses.push("locked_fields = ?")
-      values.push(JSON.stringify(parsed.data.locked_fields))
+      updateObj.locked_fields = JSON.stringify(parsed.data.locked_fields)
     }
 
-    const updated = db
-      .prepare(
-        `UPDATE design_schemas
-         SET ${setClauses.join(", ")}, updated_at = datetime('now')
-         WHERE id = ?
-         RETURNING *`
-      )
-      .get([...values, id]) as DesignSchema
+    const { data: updated, error } = await supabase
+      .from("design_schemas")
+      .update(updateObj)
+      .eq("id", id)
+      .select()
+      .single()
 
-    return NextResponse.json(updated)
+    if (error) throw error
+    return NextResponse.json(updated as DesignSchema)
   } catch (error) {
     console.error("[PATCH /api/schemas/[id]]", error)
     return NextResponse.json({ error: "Failed to update schema" }, { status: 500 })

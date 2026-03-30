@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { generateObject } from "ai"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 import { getTextProvider } from "@/lib/ai"
 import {
   GrammarBlueprintExtractionSchema,
@@ -28,10 +28,14 @@ export async function POST(request: Request) {
     }
 
     const { projectId, prompts, name } = parsed.data
-    const db = getDb()
+    const supabase = getSupabaseServer()
 
     // 2. Verify project exists
-    const project = db.prepare("SELECT id FROM projects WHERE id = ?").get(projectId)
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", projectId)
+      .single()
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
@@ -61,26 +65,23 @@ export async function POST(request: Request) {
     //    density and avg_length stored as raw values (not JSON.stringify):
     //    - density is TEXT, stored directly
     //    - avg_length is INTEGER, stored as number
-    const blueprint = db
-      .prepare(
-        `INSERT INTO grammar_blueprints
-           (project_id, name, sequence_pattern, density, avg_length,
-            compression_style, raw_prompts, distilled_grammar)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-         RETURNING *`
-      )
-      .get(
-        projectId,
-        blueprintName,
-        JSON.stringify(extraction.sequence_pattern),
-        extraction.density,
-        extraction.avg_length,
-        extraction.compression_style,
-        JSON.stringify(prompts),
-        JSON.stringify(extraction)
-      ) as GrammarBlueprint
+    const { data: blueprint, error } = await supabase
+      .from("grammar_blueprints")
+      .insert({
+        project_id:        projectId,
+        name:              blueprintName,
+        sequence_pattern:  JSON.stringify(extraction.sequence_pattern),
+        density:           extraction.density,
+        avg_length:        extraction.avg_length,
+        compression_style: extraction.compression_style,
+        raw_prompts:       JSON.stringify(prompts),
+        distilled_grammar: JSON.stringify(extraction),
+      })
+      .select()
+      .single()
 
-    return NextResponse.json({ id: blueprint.id, blueprint })
+    if (error) throw error
+    return NextResponse.json({ id: (blueprint as GrammarBlueprint).id, blueprint: blueprint as GrammarBlueprint })
   } catch (error) {
     console.error("[POST /api/distill]", error)
     return NextResponse.json(

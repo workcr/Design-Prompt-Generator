@@ -4,7 +4,7 @@ import { generateObject } from "ai"
 import fs from "fs"
 import path from "path"
 import crypto from "crypto"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 import { getVisionProvider } from "@/lib/ai"
 import {
   DesignExtractionSchema,
@@ -30,10 +30,14 @@ export async function POST(request: Request) {
     }
 
     const { projectId, filename } = parsed.data
-    const db = getDb()
+    const supabase = getSupabaseServer()
 
     // 2. Verify project exists
-    const project = db.prepare("SELECT id FROM projects WHERE id = ?").get(projectId)
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", projectId)
+      .single()
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
@@ -68,28 +72,25 @@ export async function POST(request: Request) {
       .slice(0, 16)
 
     // 6. Persist to design_schemas
-    const schema = db
-      .prepare(
-        `INSERT INTO design_schemas
-           (project_id, frame, palette, layout, text_fields, type_scale,
-            elements, style_checksum, raw_analysis, reference_image)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         RETURNING *`
-      )
-      .get(
-        projectId,
-        JSON.stringify(extraction.frame),
-        JSON.stringify(extraction.palette),
-        JSON.stringify(extraction.layout),
-        JSON.stringify(extraction.text_fields),
-        JSON.stringify(extraction.type_scale),
-        JSON.stringify(extraction.elements),
-        checksum,
-        JSON.stringify(extraction),
-        filename
-      ) as DesignSchema
+    const { data: schema, error } = await supabase
+      .from("design_schemas")
+      .insert({
+        project_id:      projectId,
+        frame:           JSON.stringify(extraction.frame),
+        palette:         JSON.stringify(extraction.palette),
+        layout:          JSON.stringify(extraction.layout),
+        text_fields:     JSON.stringify(extraction.text_fields),
+        type_scale:      JSON.stringify(extraction.type_scale),
+        elements:        JSON.stringify(extraction.elements),
+        style_checksum:  checksum,
+        raw_analysis:    JSON.stringify(extraction),
+        reference_image: filename,
+      })
+      .select()
+      .single()
 
-    return NextResponse.json({ id: schema.id, schema })
+    if (error) throw error
+    return NextResponse.json({ id: (schema as DesignSchema).id, schema: schema as DesignSchema })
   } catch (error) {
     console.error("[POST /api/analyze]", error)
     return NextResponse.json(

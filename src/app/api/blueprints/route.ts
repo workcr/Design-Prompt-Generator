@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 
 interface BlueprintListItem {
   id: string
@@ -16,20 +16,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "projectId is required" }, { status: 400 })
     }
 
-    const db = getDb()
+    const supabase = getSupabaseServer()
 
-    const project = db.prepare("SELECT id FROM projects WHERE id = ?").get(projectId)
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", projectId)
+      .single()
+
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
-    const blueprints = db
-      .prepare(
-        "SELECT id, name, created_at FROM grammar_blueprints WHERE project_id = ? ORDER BY created_at DESC"
-      )
-      .all(projectId) as BlueprintListItem[]
+    const { data: blueprints, error } = await supabase
+      .from("grammar_blueprints")
+      .select("id, name, created_at")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false })
 
-    return NextResponse.json(blueprints)
+    if (error) throw error
+    return NextResponse.json((blueprints ?? []) as BlueprintListItem[])
   } catch (error) {
     console.error("[GET /api/blueprints]", error)
     return NextResponse.json({ error: "Failed to fetch blueprints" }, { status: 500 })

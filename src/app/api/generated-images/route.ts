@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 import type { GeneratedImage } from "@/types/db"
 
 export async function GET(request: Request) {
@@ -9,19 +9,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "outputId is required" }, { status: 400 })
   }
 
-  const db = getDb()
-  const image = db
-    .prepare(
-      `SELECT * FROM generated_images
-       WHERE prompt_output_id = ? AND status = 'complete'
-       ORDER BY created_at DESC
-       LIMIT 1`
-    )
-    .get(outputId) as GeneratedImage | undefined
+  const supabase = getSupabaseServer()
+  const { data: image, error } = await supabase
+    .from("generated_images")
+    .select("*")
+    .eq("prompt_output_id", outputId)
+    .eq("status", "complete")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
+  if (error) {
+    return NextResponse.json({ error: "Failed to fetch image" }, { status: 500 })
+  }
   if (!image) {
     return NextResponse.json({ error: "No generated image found" }, { status: 404 })
   }
 
-  return NextResponse.json(image)
+  return NextResponse.json(image as GeneratedImage)
 }

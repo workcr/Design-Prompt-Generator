@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 import type { DesignSchema } from "@/types/db"
 
 export async function GET(request: Request) {
@@ -11,24 +11,32 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "projectId is required" }, { status: 400 })
     }
 
-    const db = getDb()
+    const supabase = getSupabaseServer()
 
-    const project = db.prepare("SELECT id FROM projects WHERE id = ?").get(projectId)
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", projectId)
+      .single()
+
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
-    const schema = db
-      .prepare(
-        "SELECT * FROM design_schemas WHERE project_id = ? ORDER BY created_at DESC LIMIT 1"
-      )
-      .get(projectId) as DesignSchema | undefined
+    const { data: schema, error } = await supabase
+      .from("design_schemas")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
+    if (error) throw error
     if (!schema) {
       return NextResponse.json({ error: "No schema found for this project" }, { status: 404 })
     }
 
-    return NextResponse.json(schema)
+    return NextResponse.json(schema as DesignSchema)
   } catch (error) {
     console.error("[GET /api/schemas]", error)
     return NextResponse.json({ error: "Failed to fetch schema" }, { status: 500 })

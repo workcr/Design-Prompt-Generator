@@ -2,7 +2,7 @@ import { randomUUID } from "crypto"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { streamText } from "ai"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 import { getTextProvider } from "@/lib/ai"
 import { getTextModel } from "@/lib/env"
 import {
@@ -29,20 +29,26 @@ export async function POST(request: Request) {
     }
 
     const { projectId, blueprintId } = parsed.data
-    const db = getDb()
+    const supabase = getSupabaseServer()
 
     // 2. Verify project exists
-    const project = db.prepare("SELECT id FROM projects WHERE id = ?").get(projectId)
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", projectId)
+      .single()
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
     // 3. Load design schema (latest for project)
-    const schema = db
-      .prepare(
-        "SELECT * FROM design_schemas WHERE project_id = ? ORDER BY created_at DESC LIMIT 1"
-      )
-      .get(projectId) as DesignSchema | undefined
+    const { data: schema } = await supabase
+      .from("design_schemas")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     if (!schema) {
       return NextResponse.json(
@@ -52,42 +58,46 @@ export async function POST(request: Request) {
     }
 
     // 4. Load grammar blueprint
-    let blueprint: GrammarBlueprint | undefined
+    let blueprint: GrammarBlueprint | null = null
 
     if (blueprintId) {
-      blueprint = db
-        .prepare("SELECT * FROM grammar_blueprints WHERE id = ?")
-        .get(blueprintId) as GrammarBlueprint | undefined
-
-      if (!blueprint) {
+      const { data } = await supabase
+        .from("grammar_blueprints")
+        .select("*")
+        .eq("id", blueprintId)
+        .single()
+      if (!data) {
         return NextResponse.json(
           { error: "Grammar blueprint not found" },
           { status: 404 }
         )
       }
+      blueprint = data as GrammarBlueprint
     } else {
-      blueprint = db
-        .prepare(
-          "SELECT * FROM grammar_blueprints WHERE project_id = ? ORDER BY created_at DESC LIMIT 1"
-        )
-        .get(projectId) as GrammarBlueprint | undefined
-
-      if (!blueprint) {
+      const { data } = await supabase
+        .from("grammar_blueprints")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (!data) {
         return NextResponse.json(
           { error: "No grammar blueprint found" },
           { status: 400 }
         )
       }
+      blueprint = data as GrammarBlueprint
     }
 
     // 5. Parse locked fields from schema
-    const lockedFields = JSON.parse(schema.locked_fields) as string[]
+    const lockedFields = JSON.parse((schema as DesignSchema).locked_fields) as string[]
 
     // 6. Pre-generate output ID — returned in header before stream body begins
     const outputId = randomUUID()
 
     // 7. Build rewrite input
-    const rewriteInput = buildRewriteInput(schema, blueprint, lockedFields)
+    const rewriteInput = buildRewriteInput(schema as DesignSchema, blueprint, lockedFields)
 
     // 8. Stream text via Agent B2
     const result = streamText({
@@ -96,21 +106,16 @@ export async function POST(request: Request) {
       prompt: rewriteInput,
       onFinish: async ({ text }) => {
         try {
-          const finishDb = getDb()
-          finishDb
-            .prepare(
-              `INSERT INTO prompt_outputs
-                 (id, project_id, schema_snapshot, blueprint_id, final_prompt, model_used)
-               VALUES (?, ?, ?, ?, ?, ?)`
-            )
-            .run(
-              outputId,
-              projectId,
-              JSON.stringify(schema),
-              blueprint.id,
-              text,
-              getTextModel()
-            )
+          // Create a new client in the callback — stateless, no connection overhead
+          const finishSupabase = getSupabaseServer()
+          await finishSupabase.from("prompt_outputs").insert({
+            id:              outputId,
+            project_id:      projectId,
+            schema_snapshot: JSON.stringify(schema),
+            blueprint_id:    blueprint!.id,
+            final_prompt:    text,
+            model_used:      getTextModel(),
+          })
         } catch (err) {
           console.error("[POST /api/rewrite] onFinish DB save failed:", err)
         }

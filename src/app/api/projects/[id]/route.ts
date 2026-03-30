@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { getDb } from "@/lib/db"
+import { getSupabaseServer } from "@/lib/supabase-server"
 import type { Project, DesignSchema, GrammarBlueprint, ProjectDetail } from "@/types/db"
 
 const UpdateProjectSchema = z.object({
@@ -15,25 +15,39 @@ type RouteContext = { params: Promise<{ id: string }> }
 export async function GET(_request: Request, { params }: RouteContext) {
   try {
     const { id } = await params
-    const db = getDb()
+    const supabase = getSupabaseServer()
 
-    const project = db
-      .prepare("SELECT * FROM projects WHERE id = ?")
-      .get(id) as Project | undefined
+    const { data: project, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("id", id)
+      .single()
 
-    if (!project) {
+    if (error || !project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
-    const design_schema = db
-      .prepare("SELECT * FROM design_schemas WHERE project_id = ? ORDER BY created_at DESC LIMIT 1")
-      .get(id) as DesignSchema | null ?? null
+    const { data: design_schema } = await supabase
+      .from("design_schemas")
+      .select("*")
+      .eq("project_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-    const grammar_blueprint = db
-      .prepare("SELECT * FROM grammar_blueprints WHERE project_id = ? ORDER BY created_at DESC LIMIT 1")
-      .get(id) as GrammarBlueprint | null ?? null
+    const { data: grammar_blueprint } = await supabase
+      .from("grammar_blueprints")
+      .select("*")
+      .eq("project_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-    const detail: ProjectDetail = { ...project, design_schema, grammar_blueprint }
+    const detail: ProjectDetail = {
+      ...(project as Project),
+      design_schema: (design_schema as DesignSchema | null) ?? null,
+      grammar_blueprint: (grammar_blueprint as GrammarBlueprint | null) ?? null,
+    }
     return NextResponse.json(detail)
   } catch (error) {
     console.error("[GET /api/projects/[id]]", error)
@@ -44,9 +58,14 @@ export async function GET(_request: Request, { params }: RouteContext) {
 export async function PATCH(request: Request, { params }: RouteContext) {
   try {
     const { id } = await params
-    const db = getDb()
+    const supabase = getSupabaseServer()
 
-    const exists = db.prepare("SELECT id FROM projects WHERE id = ?").get(id)
+    const { data: exists } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", id)
+      .single()
+
     if (!exists) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
@@ -60,20 +79,15 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       )
     }
 
-    const fields  = Object.keys(parsed.data) as (keyof typeof parsed.data)[]
-    const setClauses = fields.map(f => `${f} = ?`).join(", ")
-    const values     = fields.map(f => parsed.data[f])
+    const { data: updated, error } = await supabase
+      .from("projects")
+      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single()
 
-    const updated = db
-      .prepare(
-        `UPDATE projects
-         SET ${setClauses}, updated_at = datetime('now')
-         WHERE id = ?
-         RETURNING *`
-      )
-      .get([...values, id]) as Project
-
-    return NextResponse.json(updated)
+    if (error) throw error
+    return NextResponse.json(updated as Project)
   } catch (error) {
     console.error("[PATCH /api/projects/[id]]", error)
     return NextResponse.json({ error: "Failed to update project" }, { status: 500 })
@@ -83,14 +97,20 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 export async function DELETE(_request: Request, { params }: RouteContext) {
   try {
     const { id } = await params
-    const db = getDb()
+    const supabase = getSupabaseServer()
 
-    const exists = db.prepare("SELECT id FROM projects WHERE id = ?").get(id)
+    const { data: exists } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", id)
+      .single()
+
     if (!exists) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
-    db.prepare("DELETE FROM projects WHERE id = ?").run(id)
+    const { error } = await supabase.from("projects").delete().eq("id", id)
+    if (error) throw error
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     console.error("[DELETE /api/projects/[id]]", error)
