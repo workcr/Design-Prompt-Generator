@@ -117,7 +117,13 @@ export async function POST(request: Request) {
       }
       const firstOutput = replicateData.output[0]
       if (!firstOutput) throw new Error("Replicate returned empty output")
-      url = firstOutput
+      // Download and persist — Replicate URLs expire after ~24h
+      const imgResponse = await fetch(firstOutput)
+      const imgBuffer = Buffer.from(await imgResponse.arrayBuffer())
+      const genFilename = `gen-${crypto.randomUUID()}.webp`
+      fs.mkdirSync(path.join(process.cwd(), "uploads"), { recursive: true })
+      fs.writeFileSync(path.join(process.cwd(), "uploads", genFilename), imgBuffer)
+      url = `/api/uploads/${genFilename}`
       model = "flux-schnell"
     }
 

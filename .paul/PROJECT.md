@@ -14,7 +14,7 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 |-----------|-------|
 | Type | Application |
 | Version | 0.1.0-dev |
-| Status | Full local pipeline complete — Phase 7 Polish ready |
+| Status | Full local pipeline + polish complete — Phase 8 Production Deploy ready |
 | Last Updated | 2026-03-30 |
 
 **Repository:** https://github.com/workcr/Design-Prompt-Generator
@@ -58,12 +58,16 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 - ✓ **reference_image migration** — `ALTER TABLE design_schemas ADD COLUMN reference_image TEXT` idempotent migration; `/api/analyze` stores filename; `/api/uploads/[filename]` serves uploads/ with MIME-correct Content-Type — Phase 6
 - ✓ **Image generation endpoint** — `POST /api/generate`: Nano Banana 2 path (`gemini-2.5-flash-image` via direct Gemini REST, base64 → saved to uploads/) and Replicate path (`Prefer: wait` synchronous prediction); `IMAGE_GEN_PROVIDER` env flag for zero-code swap; saves `generated_images` row — Phase 6
 - ✓ **Output Tab** — prompt preview (4-line truncated), reference image left + generated image right side-by-side, Generate Image button, provider badge (Nano Banana 2 / Replicate), Regenerate button, session-persistent (loads last generated image from DB on mount) — Phase 6
+- ✓ **Output history + download** — `/api/prompt-outputs` returns list of up to 10 outputs with joined image data; Output tab shows history `<select>` (when >1 output), Copy Prompt button (clipboard + execCommand fallback), Download link, Regenerate updates active output in-place — Phase 7
+- ✓ **Replicate image persistence** — Replicate output URLs downloaded and saved to `uploads/` at generation time; all generated image URLs are local `/api/uploads/` paths (no expiry) — Phase 7
+- ✓ **Blueprint library management** — Blueprint tab loads saved blueprints on mount; new distillations prepend to list; Delete button per blueprint via `DELETE /api/blueprints/[id]` — Phase 7
+- ✓ **Project rename** — Inline rename on dashboard project cards via `PATCH /api/projects/[id]`; single-card edit mode; updates in-place — Phase 7
+- ✓ **Schema JSON export** — "Export JSON" button in Analyze tab done state; downloads `schema-{projectId}.json` from `parsedSchema` client-side Blob — Phase 7
 
 ### Active (In Progress)
 None.
 
 ### Planned (Next)
-- [ ] Phase 7: Polish + local-first UX
 - [ ] Phase 8: Production deploy (Vercel + Supabase + auth)
 
 ### Out of Scope
@@ -146,6 +150,11 @@ Local-first development using Ollama for free inference; production swaps to Gem
 | Pre-generate UUID → X-Output-Id header | Client receives DB record ID before stream ends; `onFinish` writes the row with the known ID | 2026-03-29 | Active |
 | Client-side `formatPromptForPlatform()` | No server round-trip for export formatting; pure function; all platform logic co-located | 2026-03-29 | Active |
 | Clipboard `navigator.clipboard` + `execCommand` fallback | `navigator.clipboard` throws silently in some dev/non-HTTPS contexts; execCommand ensures copy works everywhere | 2026-03-29 | Active |
+| Replicate images downloaded at generation time | Replicate output URLs expire after ~24h; downloading to `uploads/` at generation time gives permanent `/api/uploads/` paths | 2026-03-30 | Active |
+| Blueprint library in idle/error phase only | Distill form is the entry point; library is curation not navigation — avoids cluttering results view | 2026-03-30 | Active |
+| `renamingId` as single nullable string | Prevents two project cards being in rename mode simultaneously; no race conditions on PATCH | 2026-03-30 | Active |
+| Export `parsedSchema` not raw DesignSchema | Parsed typed objects are more useful externally than double-encoded TEXT JSON strings | 2026-03-30 | Active |
+| Client-side Blob download for JSON export | No server round-trip needed; pure client function using Blob + URL.createObjectURL | 2026-03-30 | Active |
 | `ALTER TABLE` try/catch migration | SQLite throws if column already exists; catch is safe — idempotent column addition pattern for all future migrations | 2026-03-30 | Active |
 | Replicate `Prefer: wait` header | Synchronous prediction response — no polling loop needed for flux-schnell; fits within 60s | 2026-03-30 | Active |
 | Gemini image gen via direct REST (not AI SDK) | `experimental_generateImage` via `@ai-sdk/google` targets Imagen (Vertex AI / allowlisted); direct REST to `gemini-2.5-flash-image:generateContent` works with standard API keys | 2026-03-30 | Active |
@@ -189,4 +198,4 @@ Local-first development using Ollama for free inference; production swaps to Gem
 
 ---
 *PROJECT.md — Updated when requirements or context change*
-*Last updated: 2026-03-30 after Phase 6 (Image Generation + Comparison)*
+*Last updated: 2026-03-30 after Phase 7 (Polish + Local-First UX)*

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useState, useEffect, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,6 +14,12 @@ import type { GrammarBlueprint } from "@/types/db"
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Phase = "idle" | "distilling" | "done" | "error"
+
+interface BlueprintListItem {
+  id: string
+  name: string | null
+  created_at: string
+}
 
 /** All JSON TEXT columns parsed into typed objects for display */
 interface ParsedBlueprint {
@@ -68,9 +74,37 @@ export default function BlueprintTab({ projectId }: { projectId: string }) {
   const [name, setName] = useState("")
   const [parsedBlueprint, setParsedBlueprint] = useState<ParsedBlueprint | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
+  const [savedBlueprints, setSavedBlueprints] = useState<BlueprintListItem[]>([])
+  const [loadingLibrary, setLoadingLibrary] = useState(true)
 
   const prompts = parsePrompts(text)
   const promptCount = prompts.length
+
+  useEffect(() => {
+    void loadLibrary()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId])
+
+  async function loadLibrary() {
+    setLoadingLibrary(true)
+    try {
+      const res = await fetch(`/api/blueprints?projectId=${projectId}`)
+      if (res.ok) {
+        const data = (await res.json()) as BlueprintListItem[]
+        setSavedBlueprints(data)
+      }
+    } finally {
+      setLoadingLibrary(false)
+    }
+  }
+
+  async function deleteBlueprint(id: string) {
+    if (!confirm("Delete this blueprint? This cannot be undone.")) return
+    const res = await fetch(`/api/blueprints/${id}`, { method: "DELETE" })
+    if (res.ok) {
+      setSavedBlueprints((prev) => prev.filter((b) => b.id !== id))
+    }
+  }
 
   function reset() {
     setPhase("idle")
@@ -103,6 +137,10 @@ export default function BlueprintTab({ projectId }: { projectId: string }) {
         blueprint: GrammarBlueprint
       }
       setParsedBlueprint(parseDbBlueprint(data.blueprint))
+      setSavedBlueprints((prev) => [
+        { id: data.id, name: name.trim() || null, created_at: new Date().toISOString() },
+        ...prev,
+      ])
       setPhase("done")
     } catch {
       setErrorMsg("Distillation failed. Check the server logs for details.")
@@ -156,6 +194,44 @@ export default function BlueprintTab({ projectId }: { projectId: string }) {
           >
             {phase === "error" ? "Try again" : "Distill Grammar"}
           </Button>
+        </div>
+
+        {/* Saved Blueprints library */}
+        <div className="mt-2">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Saved Blueprints
+          </p>
+          {loadingLibrary ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : savedBlueprints.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No blueprints yet.</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {savedBlueprints.map((b) => (
+                <li
+                  key={b.id}
+                  className="flex items-center justify-between rounded-md border px-3 py-2"
+                >
+                  <div>
+                    <p className="text-sm font-medium">
+                      {b.name ?? "Untitled blueprint"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(b.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => void deleteBlueprint(b.id)}
+                  >
+                    Delete
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     )

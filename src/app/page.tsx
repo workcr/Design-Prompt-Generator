@@ -22,6 +22,9 @@ export default function Dashboard() {
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState("")
+  const [renaming, setRenaming] = useState(false)
 
   useEffect(() => {
     void loadProjects()
@@ -61,6 +64,27 @@ export default function Dashboard() {
       setError("Failed to create project.")
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleRename(id: string) {
+    if (!renameValue.trim()) return
+    try {
+      setRenaming(true)
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: renameValue.trim() }),
+      })
+      if (!res.ok) throw new Error("Rename failed")
+      const updated = (await res.json()) as Project
+      setProjects((prev) => prev.map((p) => (p.id === id ? updated : p)))
+      setRenamingId(null)
+      setRenameValue("")
+    } catch {
+      setError("Failed to rename project.")
+    } finally {
+      setRenaming(false)
     }
   }
 
@@ -182,21 +206,70 @@ export default function Dashboard() {
                     })}
                   </p>
                 </CardContent>
-                <CardFooter className="flex gap-2 pt-2">
-                  <Link
-                    href={`/projects/${project.id}`}
-                    className={cn(buttonVariants({ size: "sm" }), "flex-1")}
-                  >
-                    Open
-                  </Link>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => void handleDelete(project.id, project.name)}
-                  >
-                    Delete
-                  </Button>
+                <CardFooter className="flex flex-col gap-2 pt-2">
+                  {renamingId === project.id ? (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        void handleRename(project.id)
+                      }}
+                      className="flex w-full items-center gap-2"
+                    >
+                      <Input
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        className="h-8 text-sm"
+                        disabled={renaming}
+                      />
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={renaming || !renameValue.trim()}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setRenamingId(null)
+                          setRenameValue("")
+                        }}
+                        disabled={renaming}
+                      >
+                        Cancel
+                      </Button>
+                    </form>
+                  ) : (
+                    <div className="flex w-full gap-2">
+                      <Link
+                        href={`/projects/${project.id}`}
+                        className={cn(buttonVariants({ size: "sm" }), "flex-1")}
+                      >
+                        Open
+                      </Link>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setRenamingId(project.id)
+                          setRenameValue(project.name)
+                        }}
+                      >
+                        Rename
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => void handleDelete(project.id, project.name)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  )}
                 </CardFooter>
               </Card>
             ))}

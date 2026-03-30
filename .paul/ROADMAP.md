@@ -8,7 +8,7 @@ Eight phases take the project from a bare Next.js scaffold to a deployed, authen
 
 **v0.1 — Local Pipeline MVP** (v0.1.0)
 Status: In progress
-Phases: 6 of 8 complete
+Phases: 7 of 8 complete
 
 ## Phases
 
@@ -20,7 +20,7 @@ Phases: 6 of 8 complete
 | 4 | Structured Prompt Editor | 2 | ✅ Complete | 2026-03-29 |
 | 5 | Agent B2 + Prompt Export Panel | 3 | ✅ Complete | 2026-03-29 |
 | 6 | Image Generation + Comparison | 2 | ✅ Complete | 2026-03-30 |
-| 7 | Polish + Local-First UX | TBD | Not started | - |
+| 7 | Polish + Local-First UX | 2 | ✅ Complete | 2026-03-30 |
 | 8 | Production Deploy | TBD | Not started | - |
 
 ## Phase Details
@@ -156,7 +156,8 @@ Phases: 6 of 8 complete
 - Onboarding flow for new users
 
 **Plans:**
-- [ ] 07-01: TBD during /paul:plan
+- [x] 07-01: Output History + Download (Replicate persistence · prompt-outputs list · history selector · copy · download) — 2026-03-30
+- [x] 07-02: Blueprint + Project Management (blueprint library · delete endpoint · project rename · schema JSON export) — 2026-03-30
 
 ---
 
@@ -180,4 +181,4 @@ Phases: 6 of 8 complete
 
 ---
 *Roadmap created: 2026-03-28*
-*Last updated: 2026-03-30 — Phase 6 complete*
+*Last updated: 2026-03-30 — Phase 7 complete*

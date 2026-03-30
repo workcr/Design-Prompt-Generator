@@ -69,6 +69,22 @@ export default function AnalyzeTab({ projectId }: { projectId: string }) {
     setErrorMsg("")
   }
 
+  function exportJson() {
+    if (!parsedSchema) return
+    const blob = new Blob(
+      [JSON.stringify(parsedSchema, null, 2)],
+      { type: "application/json" }
+    )
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `schema-${projectId}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   function handleFile(file: File) {
     if (!file.type.startsWith("image/")) {
       setErrorMsg("Only image files are accepted (PNG, JPG, WEBP).")
@@ -302,9 +318,12 @@ export default function AnalyzeTab({ projectId }: { projectId: string }) {
           <p className="text-base leading-relaxed">
             {parsedSchema.style_summary ?? "—"}
           </p>
-          <div className="mt-2">
+          <div className="mt-2 flex gap-2">
             <Button variant="outline" size="sm" onClick={reset}>
               Upload new image
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportJson}>
+              Export JSON
             </Button>
           </div>
         </div>

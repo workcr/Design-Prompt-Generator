@@ -14,25 +14,28 @@ interface PromptOutputItem {
   model_used: string | null
   created_at: string
   reference_image: string | null
+  image_url: string | null
+  image_provider: string | null
 }
 
-interface GeneratedImageItem {
+interface GenerateResponse {
   id: string
-  prompt_output_id: string
+  url: string
   provider: string
-  url: string | null
-  status: string
-  created_at: string
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function OutputTab({ projectId }: { projectId: string }) {
   const [loadPhase, setLoadPhase] = useState<LoadPhase>("loading")
-  const [promptOutput, setPromptOutput] = useState<PromptOutputItem | null>(null)
-  const [generatedImage, setGeneratedImage] = useState<GeneratedImageItem | null>(null)
+  const [outputs, setOutputs] = useState<PromptOutputItem[]>([])
+  const [activeIndex, setActiveIndex] = useState(0)
   const [imagePhase, setImagePhase] = useState<ImagePhase>("none")
   const [imageError, setImageError] = useState("")
+  const [copied, setCopied] = useState(false)
+
+  // Derived — guarded for noUncheckedIndexedAccess
+  const activeOutput: PromptOutputItem | null = outputs[activeIndex] ?? null
 
   useEffect(() => {
     void loadData()
@@ -52,32 +55,34 @@ export default function OutputTab({ projectId }: { projectId: string }) {
         setLoadPhase("error")
         return
       }
-      const output = (await res.json()) as PromptOutputItem
-      setPromptOutput(output)
-
-      // Load existing generated image if any
-      const imgRes = await fetch(`/api/generated-images?outputId=${output.id}`)
-      if (imgRes.ok) {
-        const img = (await imgRes.json()) as GeneratedImageItem
-        setGeneratedImage(img)
-        setImagePhase("complete")
-      }
-
+      const data = (await res.json()) as PromptOutputItem[]
+      setOutputs(data)
+      setActiveIndex(0)
+      const first = data[0]
+      setImagePhase(first?.image_url ? "complete" : "none")
       setLoadPhase("ready")
     } catch {
       setLoadPhase("error")
     }
   }
 
+  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const idx = Number(e.target.value)
+    setActiveIndex(idx)
+    const selected = outputs[idx]
+    setImagePhase(selected?.image_url ? "complete" : "none")
+    setImageError("")
+  }
+
   async function generate() {
-    if (!promptOutput) return
+    if (!activeOutput) return
     setImagePhase("generating")
     setImageError("")
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outputId: promptOutput.id }),
+        body: JSON.stringify({ outputId: activeOutput.id }),
       })
       if (!res.ok) {
         const data = (await res.json()) as { error?: string }
@@ -85,13 +90,38 @@ export default function OutputTab({ projectId }: { projectId: string }) {
         setImagePhase("error")
         return
       }
-      const data = (await res.json()) as GeneratedImageItem
-      setGeneratedImage(data)
+      const data = (await res.json()) as GenerateResponse
+      setOutputs(prev =>
+        prev.map((o, i) =>
+          i === activeIndex
+            ? { ...o, image_url: data.url, image_provider: data.provider }
+            : o
+        )
+      )
       setImagePhase("complete")
     } catch {
       setImageError("Generation failed. Check the dev server.")
       setImagePhase("error")
     }
+  }
+
+  async function copyPrompt() {
+    const text = activeOutput?.final_prompt ?? ""
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      // execCommand fallback for non-HTTPS / restricted contexts
+      const ta = document.createElement("textarea")
+      ta.value = text
+      ta.style.position = "fixed"
+      ta.style.opacity = "0"
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand("copy")
+      document.body.removeChild(ta)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   // ── Render: loading ──────────────────────────────────────────────────────────
@@ -132,22 +162,47 @@ export default function OutputTab({ projectId }: { projectId: string }) {
     )
   }
 
-  if (!promptOutput) return null
+  if (!activeOutput) return null
 
   // ── Render: ready ────────────────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col gap-6">
+      {/* History selector — only when more than 1 output */}
+      {outputs.length > 1 && (
+        <div className="flex items-center gap-3">
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            History
+          </label>
+          <select
+            value={activeIndex}
+            onChange={handleSelectChange}
+            className="rounded-md border bg-background px-3 py-1.5 text-sm"
+          >
+            {outputs.map((o, i) => (
+              <option key={o.id} value={i}>
+                {new Date(o.created_at).toLocaleString()}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Prompt preview */}
       <div className="rounded-lg border p-4">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Latest Prompt
-        </h3>
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Prompt
+          </h3>
+          <Button variant="outline" size="sm" onClick={() => void copyPrompt()}>
+            {copied ? "Copied!" : "Copy Prompt"}
+          </Button>
+        </div>
         <p className="line-clamp-4 font-mono text-sm leading-relaxed text-muted-foreground">
-          {promptOutput.final_prompt ?? "—"}
+          {activeOutput.final_prompt ?? "—"}
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
-          {new Date(promptOutput.created_at).toLocaleString()}
+          {new Date(activeOutput.created_at).toLocaleString()}
         </p>
       </div>
 
@@ -158,10 +213,10 @@ export default function OutputTab({ projectId }: { projectId: string }) {
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Reference
           </p>
-          {promptOutput.reference_image ? (
+          {activeOutput.reference_image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={`/api/uploads/${promptOutput.reference_image}`}
+              src={`/api/uploads/${activeOutput.reference_image}`}
               alt="Reference design"
               className="w-full rounded-lg border object-cover"
             />
@@ -177,16 +232,16 @@ export default function OutputTab({ projectId }: { projectId: string }) {
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Generated
           </p>
-          {imagePhase === "complete" && generatedImage?.url ? (
+          {imagePhase === "complete" && activeOutput.image_url ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={generatedImage.url}
+                src={activeOutput.image_url}
                 alt="Generated image"
                 className="w-full rounded-lg border object-cover"
               />
               <span className="absolute bottom-2 right-2 rounded-md bg-background/80 px-2 py-0.5 text-xs font-medium backdrop-blur-sm">
-                {generatedImage.provider === "nano_banana_2"
+                {activeOutput.image_provider === "nano_banana_2"
                   ? "Nano Banana 2"
                   : "Replicate"}
               </span>
@@ -207,8 +262,8 @@ export default function OutputTab({ projectId }: { projectId: string }) {
         </div>
       </div>
 
-      {/* Regenerate — shown after first image */}
-      {imagePhase === "complete" && (
+      {/* Actions row — shown after first image */}
+      {imagePhase === "complete" && activeOutput.image_url && (
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
@@ -217,6 +272,13 @@ export default function OutputTab({ projectId }: { projectId: string }) {
           >
             Regenerate
           </Button>
+          <a
+            href={activeOutput.image_url}
+            download
+            className="inline-flex items-center justify-center rounded-md border bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent"
+          >
+            Download
+          </a>
           {imageError && (
             <p className="text-xs text-destructive">{imageError}</p>
           )}

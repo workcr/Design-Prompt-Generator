@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server"
 import { getDb } from "@/lib/db"
 
-interface PromptOutputWithRef {
+interface PromptOutputWithImage {
   id: string
   final_prompt: string | null
   model_used: string | null
   created_at: string
   reference_image: string | null
+  image_url: string | null
+  image_provider: string | null
 }
 
 export async function GET(request: Request) {
@@ -16,8 +18,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "projectId is required" }, { status: 400 })
   }
 
+  const limitParam = searchParams.get("limit")
+  const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 10, 1), 50) : 10
+
   const db = getDb()
-  const row = db
+  const rows = db
     .prepare(
       `SELECT
          po.id,
@@ -28,17 +33,27 @@ export async function GET(request: Request) {
           FROM design_schemas ds
           WHERE ds.project_id = po.project_id
           ORDER BY ds.created_at DESC
-          LIMIT 1) AS reference_image
+          LIMIT 1) AS reference_image,
+         (SELECT gi.url
+          FROM generated_images gi
+          WHERE gi.prompt_output_id = po.id AND gi.status = 'complete'
+          ORDER BY gi.created_at DESC
+          LIMIT 1) AS image_url,
+         (SELECT gi.provider
+          FROM generated_images gi
+          WHERE gi.prompt_output_id = po.id AND gi.status = 'complete'
+          ORDER BY gi.created_at DESC
+          LIMIT 1) AS image_provider
        FROM prompt_outputs po
        WHERE po.project_id = ?
        ORDER BY po.created_at DESC
-       LIMIT 1`
+       LIMIT ?`
     )
-    .get(projectId) as PromptOutputWithRef | undefined
+    .all(projectId, limit) as PromptOutputWithImage[]
 
-  if (!row) {
+  if (rows.length === 0) {
     return NextResponse.json({ error: "No prompt outputs found" }, { status: 404 })
   }
 
-  return NextResponse.json(row)
+  return NextResponse.json(rows)
 }
