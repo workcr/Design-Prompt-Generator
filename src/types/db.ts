@@ -17,7 +17,8 @@ export interface DesignSchema {
   elements:       string | null  // JSON
   style_checksum: string | null
   locked_fields:  string         // JSON array — defaults to '[]'
-  raw_analysis:   string | null  // JSON
+  raw_analysis:    string | null  // JSON
+  reference_image: string | null
   created_at: string
   updated_at: string
 }

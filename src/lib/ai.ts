@@ -1,6 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
-import { isLocalMode, getVisionModel, env } from "@/lib/env"
+import { isLocalMode, getVisionModel, getTextModel, env } from "@/lib/env"
 
 /**
  * Returns the active vision model for Agent A.
@@ -30,4 +30,31 @@ export function getVisionProvider() {
     apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
   })
   return google(getVisionModel())
+}
+
+/**
+ * Returns the active text model for Agents B1 and B2.
+ * LOCAL_MODE=true  → Ollama via OpenAI-compatible endpoint (qwen3-vl:30b)
+ * LOCAL_MODE=false → OpenAI gpt-4o-mini
+ *
+ * Reuses @ai-sdk/openai for both paths — Ollama via custom baseURL,
+ * OpenAI via standard API key.
+ */
+export function getTextProvider() {
+  if (isLocalMode()) {
+    const ollama = createOpenAI({
+      baseURL: `${env.OLLAMA_BASE_URL}/v1`,
+      apiKey: "ollama",
+    })
+    return ollama(getTextModel())
+  }
+
+  if (!env.OPENAI_API_KEY) {
+    throw new Error(
+      "OPENAI_API_KEY is required when LOCAL_MODE=false"
+    )
+  }
+
+  const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
+  return openai(getTextModel())
 }

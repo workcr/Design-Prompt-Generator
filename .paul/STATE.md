@@ -10,26 +10,26 @@ See: .paul/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Milestone: v0.1 — Local Pipeline MVP
-Phase: 6 of 8 (Image Generation + Comparison) — Not started
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-03-29 — Phase 5 complete, transitioned to Phase 6
+Phase: 6 of 8 (Image Generation + Comparison) — ✅ Complete
+Plan: All plans complete
+Status: Phase 6 complete — ready for Phase 7
+Last activity: 2026-03-30 — Phase 6 complete, full pipeline verified
 
 Progress:
-- Milestone: [██████░░░░] 62%
+- Milestone: [████████░░] 80%
 - Phase 1:   [██████████] 100% ✅
 - Phase 2:   [██████████] 100% ✅
 - Phase 3:   [██████████] 100% ✅
 - Phase 4:   [██████████] 100% ✅
 - Phase 5:   [██████████] 100% ✅
-- Phase 6:   [░░░░░░░░░░] 0%
+- Phase 6:   [██████████] 100% ✅
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ○        ○        ○     [Phase 6 — ready to plan]
+  ✓        ✓        ✓     [Phase 6 complete — ready for Phase 7]
 ```
 
 ## Accumulated Context
@@ -58,6 +58,11 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | GET /api/blueprints returns minimal fields only | 05-02 | id, name, created_at — no raw_prompts exposed; lean payload pattern |
 | Native `<select>` styled with Input tokens | 05-02 | No shadcn Select dependency; consistent with existing form elements |
 | noUncheckedIndexedAccess: extract array[n] to const | 05-02 | Guard pattern for all future array element access in strict TS |
+| ALTER TABLE try/catch migration | 06-01 | Idempotent SQLite column addition — throws on existing column, safe to catch |
+| Replicate URL stored directly (not downloaded) | 06-01 | MVP sufficient; download-and-save deferred to Phase 7 |
+| Prefer:wait header for Replicate | 06-01 | Synchronous prediction — no polling loop needed for flux-schnell |
+| Gemini image gen via direct REST (not AI SDK) | 06-02 | experimental_generateImage targets Imagen (Vertex/allowlisted); gemini-2.5-flash-image:generateContent works with standard keys |
+| gemini-2.5-flash-image model name | 06-02 | imagen-3.0-* uses :predict not :generateContent; gemini-2.0-flash-exp-image-generation retired; gemini-2.5-flash-image is current |
 
 Decisions imported from PLANNING.md at init:
 
@@ -90,10 +95,10 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29
-Stopped at: Phase 5 complete, ready to plan Phase 6
-Next action: Run /paul:plan for Phase 6 (Image Generation + Comparison)
-Resume context: .paul/ROADMAP.md
+Last session: 2026-03-30
+Stopped at: Phase 6 complete — full pipeline verified end-to-end
+Next action: Run /paul:plan for Phase 7 (Polish + Local-First UX)
+Resume context: .paul/phases/06-image-generation/06-02-SUMMARY.md
 
 ---
 *STATE.md — Updated after every significant action*

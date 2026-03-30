@@ -72,8 +72,8 @@ export async function POST(request: Request) {
       .prepare(
         `INSERT INTO design_schemas
            (project_id, frame, palette, layout, text_fields, type_scale,
-            elements, style_checksum, raw_analysis)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            elements, style_checksum, raw_analysis, reference_image)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING *`
       )
       .get(
@@ -85,7 +85,8 @@ export async function POST(request: Request) {
         JSON.stringify(extraction.type_scale),
         JSON.stringify(extraction.elements),
         checksum,
-        JSON.stringify(extraction)
+        JSON.stringify(extraction),
+        filename
       ) as DesignSchema
 
     return NextResponse.json({ id: schema.id, schema })

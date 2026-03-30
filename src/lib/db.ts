@@ -22,5 +22,12 @@ export function getDb(): Database.Database {
   )
   _db.exec(schema)
 
+  // Migrations — idempotent: SQLite throws if column already exists, catch is safe
+  try {
+    _db.exec("ALTER TABLE design_schemas ADD COLUMN reference_image TEXT")
+  } catch {
+    // column already exists — no-op
+  }
+
   return _db
 }

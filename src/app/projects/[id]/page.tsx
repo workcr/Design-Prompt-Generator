@@ -12,6 +12,7 @@ import type { Project } from "@/types/db"
 import AnalyzeTab from "./analyze-tab"
 import BlueprintTab from "./blueprint-tab"
 import PromptTab from "./prompt-tab"
+import OutputTab from "./output-tab"
 
 type PageProps = { params: Promise<{ id: string }> }
 
@@ -73,32 +74,10 @@ export default async function WorkspacePage({ params }: PageProps) {
           </TabsContent>
 
           <TabsContent value="output">
-            <PlaceholderTab
-              phase="Phase 6"
-              description="Send the final prompt to Nano Banana 2 or Replicate and compare the generated image against the original reference."
-            />
+            <OutputTab projectId={id} />
           </TabsContent>
         </Tabs>
       </div>
     </main>
-  )
-}
-
-function PlaceholderTab({
-  phase,
-  description,
-}: {
-  phase: string
-  description: string
-}) {
-  return (
-    <div className="flex min-h-64 flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        {phase}
-      </p>
-      <p className="mt-2 max-w-md text-sm text-muted-foreground">
-        {description}
-      </p>
-    </div>
   )
 }

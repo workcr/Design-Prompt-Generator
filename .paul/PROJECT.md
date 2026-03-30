@@ -14,8 +14,8 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 |-----------|-------|
 | Type | Application |
 | Version | 0.1.0-dev |
-| Status | Agent B2 + Export Panel complete — Phase 6 ready |
-| Last Updated | 2026-03-29 |
+| Status | Full local pipeline complete — Phase 7 Polish ready |
+| Last Updated | 2026-03-30 |
 
 **Repository:** https://github.com/workcr/Design-Prompt-Generator
 
@@ -55,12 +55,14 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 - ✓ **Blueprint selector API** — GET `/api/blueprints?projectId=X` returns `{ id, name, created_at }[]` ordered by created_at DESC — Phase 5
 - ✓ **Generation UI** — blueprint selector (pre-selects latest), Generate button, streaming prompt display with blink cursor, Output ID label — Phase 5
 - ✓ **Prompt Export Panel** — platform presets (Plain Text / Midjourney v7 `--v 7 --ar` / Freepik / Higgsfield AI), aspect ratio selector, formatted prompt display, clipboard copy with execCommand fallback, character count + token estimate — Phase 5
+- ✓ **reference_image migration** — `ALTER TABLE design_schemas ADD COLUMN reference_image TEXT` idempotent migration; `/api/analyze` stores filename; `/api/uploads/[filename]` serves uploads/ with MIME-correct Content-Type — Phase 6
+- ✓ **Image generation endpoint** — `POST /api/generate`: Nano Banana 2 path (`gemini-2.5-flash-image` via direct Gemini REST, base64 → saved to uploads/) and Replicate path (`Prefer: wait` synchronous prediction); `IMAGE_GEN_PROVIDER` env flag for zero-code swap; saves `generated_images` row — Phase 6
+- ✓ **Output Tab** — prompt preview (4-line truncated), reference image left + generated image right side-by-side, Generate Image button, provider badge (Nano Banana 2 / Replicate), Regenerate button, session-persistent (loads last generated image from DB on mount) — Phase 6
 
 ### Active (In Progress)
 None.
 
 ### Planned (Next)
-- [ ] Phase 6: Image generation + comparison
 - [ ] Phase 7: Polish + local-first UX
 - [ ] Phase 8: Production deploy (Vercel + Supabase + auth)
 
@@ -144,15 +146,19 @@ Local-first development using Ollama for free inference; production swaps to Gem
 | Pre-generate UUID → X-Output-Id header | Client receives DB record ID before stream ends; `onFinish` writes the row with the known ID | 2026-03-29 | Active |
 | Client-side `formatPromptForPlatform()` | No server round-trip for export formatting; pure function; all platform logic co-located | 2026-03-29 | Active |
 | Clipboard `navigator.clipboard` + `execCommand` fallback | `navigator.clipboard` throws silently in some dev/non-HTTPS contexts; execCommand ensures copy works everywhere | 2026-03-29 | Active |
+| `ALTER TABLE` try/catch migration | SQLite throws if column already exists; catch is safe — idempotent column addition pattern for all future migrations | 2026-03-30 | Active |
+| Replicate `Prefer: wait` header | Synchronous prediction response — no polling loop needed for flux-schnell; fits within 60s | 2026-03-30 | Active |
+| Gemini image gen via direct REST (not AI SDK) | `experimental_generateImage` via `@ai-sdk/google` targets Imagen (Vertex AI / allowlisted); direct REST to `gemini-2.5-flash-image:generateContent` works with standard API keys | 2026-03-30 | Active |
+| Plain `<img>` for generated images | Replicate/Gemini URLs and local uploads have unknown dimensions; `next/image` requires known width/height | 2026-03-30 | Active |
 
 ## Success Metrics
 
 | Metric | Target | Current | Status |
 |--------|--------|---------|--------|
-| Full pipeline runs end-to-end | Image in → prompt out → image generated | - | Not started |
-| Agent A schema quality | All required fields populated and valid | - | Not started |
-| Agent B2 prompt coherence | 3/3 manual test cases pass review | - | Not started |
-| Provider swap | Both Nano Banana 2 and Replicate produce valid output | - | Not started |
+| Full pipeline runs end-to-end | Image in → prompt out → image generated | ✅ Verified 2026-03-30 | Complete |
+| Agent A schema quality | All required fields populated and valid | Verified via live analysis | Complete |
+| Agent B2 prompt coherence | 3/3 manual test cases pass review | Verified via live generation | Complete |
+| Provider swap | Both Nano Banana 2 and Replicate produce valid output | Both verified locally | Complete |
 | Production cost per run | Under $0.20 | - | Not started |
 | Vercel deploy | Full pipeline works in production with auth | - | Not started |
 
@@ -183,4 +189,4 @@ Local-first development using Ollama for free inference; production swaps to Gem
 
 ---
 *PROJECT.md — Updated when requirements or context change*
-*Last updated: 2026-03-29 after Phase 5 (Agent B2 + Prompt Export Panel)*
+*Last updated: 2026-03-30 after Phase 6 (Image Generation + Comparison)*

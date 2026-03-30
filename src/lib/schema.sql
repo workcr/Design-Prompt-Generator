@@ -17,9 +17,10 @@ CREATE TABLE IF NOT EXISTS design_schemas (
   elements       TEXT,
   style_checksum TEXT,
   locked_fields  TEXT NOT NULL DEFAULT '[]',
-  raw_analysis   TEXT,
-  created_at     TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
+  raw_analysis    TEXT,
+  reference_image TEXT,
+  created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS grammar_blueprints (

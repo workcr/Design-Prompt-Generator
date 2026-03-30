@@ -8,7 +8,7 @@ Eight phases take the project from a bare Next.js scaffold to a deployed, authen
 
 **v0.1 — Local Pipeline MVP** (v0.1.0)
 Status: In progress
-Phases: 5 of 8 complete
+Phases: 6 of 8 complete
 
 ## Phases
 
@@ -19,7 +19,7 @@ Phases: 5 of 8 complete
 | 3 | Agent B1 — Grammar Blueprint Distillation | 2 | ✅ Complete | 2026-03-28 |
 | 4 | Structured Prompt Editor | 2 | ✅ Complete | 2026-03-29 |
 | 5 | Agent B2 + Prompt Export Panel | 3 | ✅ Complete | 2026-03-29 |
-| 6 | Image Generation + Comparison | TBD | Not started | - |
+| 6 | Image Generation + Comparison | 2 | ✅ Complete | 2026-03-30 |
 | 7 | Polish + Local-First UX | TBD | Not started | - |
 | 8 | Production Deploy | TBD | Not started | - |
 
@@ -128,19 +128,17 @@ Phases: 5 of 8 complete
 
 **Goal:** Full pipeline complete — image in, image out, provider-swappable
 **Depends on:** Phase 5 (final prompt exists)
-**Research:** Likely (Nano Banana 2 API integration, Replicate fallback, streaming vs polling patterns)
-**Research topics:** Nano Banana 2 streaming response shape; Replicate webhook vs polling; head-to-head quality benchmark
 
 **Scope:**
 - /api/generate with provider switch (Nano Banana 2 primary / Replicate fallback)
 - IMAGE_GEN_PROVIDER env flag for zero-code provider swap
-- Generation status handling (streaming for Nano Banana 2, polling for Replicate)
-- Output image display
-- Side-by-side comparison (input reference vs generated output)
+- reference_image column migration + /api/uploads/[filename] serve route
+- Output tab with prompt preview + side-by-side reference vs generated comparison
 - GeneratedImage saved to DB with provider field
 
 **Plans:**
-- [ ] 06-01: TBD during /paul:plan
+- [x] 06-01: Image Generation Backend (schema migration · /api/uploads/[filename] · /api/generate · Replicate Prefer:wait) — 2026-03-30
+- [x] 06-02: Output Tab UI (/api/prompt-outputs · /api/generated-images · output-tab.tsx · gemini-2.5-flash-image) — 2026-03-30
 
 ---
 
@@ -182,4 +180,4 @@ Phases: 5 of 8 complete
 
 ---
 *Roadmap created: 2026-03-28*
-*Last updated: 2026-03-29 — Phase 5 complete*
+*Last updated: 2026-03-30 — Phase 6 complete*
