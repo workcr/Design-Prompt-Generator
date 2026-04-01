@@ -562,7 +562,7 @@ export default function PromptTab({ projectId }: { projectId: string }) {
         )}
 
         {/* Typography */}
-        {schema.type_scale && (
+        {schema.type_scale && schema.type_scale.length > 0 && (
           <EditorCard>
             <SectionHeader
               title="Typography"
@@ -572,58 +572,38 @@ export default function PromptTab({ projectId }: { projectId: string }) {
             />
             <div
               className={[
-                "flex flex-col gap-3 transition-opacity",
+                "flex flex-col gap-4 transition-opacity",
                 isLocked("type_scale") ? "pointer-events-none opacity-60" : "",
               ].join(" ")}
             >
-              <FieldInput
-                label="Typeface"
-                value={schema.type_scale.primary_typeface}
-                disabled={isLocked("type_scale")}
-                onChange={(v) =>
-                  setSchema((prev) =>
-                    prev?.type_scale
-                      ? { ...prev, type_scale: { ...prev.type_scale, primary_typeface: v } }
-                      : prev
-                  )
-                }
-              />
-              <FieldInput
-                label="Weight range"
-                value={schema.type_scale.weight_range}
-                disabled={isLocked("type_scale")}
-                onChange={(v) =>
-                  setSchema((prev) =>
-                    prev?.type_scale
-                      ? { ...prev, type_scale: { ...prev.type_scale, weight_range: v } }
-                      : prev
-                  )
-                }
-              />
-              <FieldInput
-                label="Scale"
-                value={schema.type_scale.scale}
-                disabled={isLocked("type_scale")}
-                onChange={(v) =>
-                  setSchema((prev) =>
-                    prev?.type_scale
-                      ? { ...prev, type_scale: { ...prev.type_scale, scale: v } }
-                      : prev
-                  )
-                }
-              />
-              <FieldInput
-                label="Letter spacing"
-                value={schema.type_scale.letter_spacing}
-                disabled={isLocked("type_scale")}
-                onChange={(v) =>
-                  setSchema((prev) =>
-                    prev?.type_scale
-                      ? { ...prev, type_scale: { ...prev.type_scale, letter_spacing: v as NonNullable<DesignExtraction["type_scale"]>["letter_spacing"] } }
-                      : prev
-                  )
-                }
-              />
+              {schema.type_scale.map((entry, i) => (
+                <div key={i} className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    {entry.role}
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <FieldRow
+                      label="Classification"
+                      value={entry.fingerprint.classification}
+                    />
+                    <FieldRow
+                      label="Editorial style"
+                      value={entry.fingerprint.editorialStyle}
+                    />
+                    <FieldRow
+                      label="Font"
+                      value={[entry.fingerprint.fontFamily, entry.fingerprint.fontStyle]
+                        .filter(Boolean)
+                        .join(" ")}
+                    />
+                    <FieldRow label="Case" value={entry.fingerprint.case} />
+                    <FieldRow
+                      label="Letter spacing"
+                      value={entry.fingerprint.letterSpacing}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </EditorCard>
         )}
@@ -929,6 +909,15 @@ function SectionHeader({
       >
         {locked ? "🔒 Unlock" : "🔓 Lock"}
       </Button>
+    </div>
+  )
+}
+
+function FieldRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-2 text-sm">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span className="text-right font-medium">{value}</span>
     </div>
   )
 }

@@ -397,22 +397,48 @@ export default function AnalyzeTab({ projectId }: { projectId: string }) {
         )}
 
         <SchemaCard title="Typography">
-          {parsedSchema.type_scale ? (
-            <>
-              <FieldRow
-                label="Typeface"
-                value={parsedSchema.type_scale.primary_typeface}
-              />
-              <FieldRow
-                label="Weight range"
-                value={parsedSchema.type_scale.weight_range}
-              />
-              <FieldRow label="Scale" value={parsedSchema.type_scale.scale} />
-              <FieldRow
-                label="Letter spacing"
-                value={parsedSchema.type_scale.letter_spacing}
-              />
-            </>
+          {parsedSchema.type_scale && parsedSchema.type_scale.length > 0 ? (
+            <div className="space-y-4">
+              {parsedSchema.type_scale.map((entry, i) => (
+                <div key={i} className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    {entry.role}
+                  </p>
+                  <FieldRow
+                    label="Classification"
+                    value={entry.fingerprint.classification}
+                  />
+                  <FieldRow
+                    label="Stroke contrast"
+                    value={entry.fingerprint.strokeContrast}
+                  />
+                  <FieldRow
+                    label="Editorial style"
+                    value={entry.fingerprint.editorialStyle}
+                  />
+                  <FieldRow
+                    label="Font"
+                    value={[entry.fingerprint.fontFamily, entry.fingerprint.fontStyle]
+                      .filter(Boolean)
+                      .join(" ")}
+                  />
+                  <FieldRow
+                    label="Weight"
+                    value={String(entry.fingerprint.fontWeight)}
+                  />
+                  <FieldRow label="Size" value={entry.fingerprint.fontSize} />
+                  <FieldRow label="Case" value={entry.fingerprint.case} />
+                  <FieldRow
+                    label="Letter spacing"
+                    value={entry.fingerprint.letterSpacing}
+                  />
+                  <FieldRow
+                    label="Line height"
+                    value={entry.fingerprint.lineHeight}
+                  />
+                </div>
+              ))}
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">
               No typography detected

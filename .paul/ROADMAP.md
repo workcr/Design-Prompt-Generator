@@ -7,8 +7,8 @@ The project evolves across two milestones. v0.1 delivered the full local pipelin
 ## Current Milestone
 
 **v0.2 — Output Quality Loop** (v0.2.0)
-Status: Not started
-Phases: 0 of 2 complete
+Status: In Progress
+Phases: 1 of 2 complete
 
 ## Milestones
 
@@ -29,7 +29,7 @@ Phases: 0 of 2 complete
 
 | Phase | Name | Plans | Status | Completed |
 |-------|------|-------|--------|-----------|
-| 9 | Extraction Upgrade | TBD | Not started | - |
+| 9 | Extraction Upgrade | 1 | ✅ Complete | 2026-03-31 |
 | 10 | Evaluation + Refinement Loop | TBD | Not started | - |
 
 ## Phase Details
