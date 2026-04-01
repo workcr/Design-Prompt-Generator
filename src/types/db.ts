@@ -50,12 +50,25 @@ export interface PromptOutput {
 export interface GeneratedImage {
   id:               string
   prompt_output_id: string
-  provider:         "nano_banana_2" | "replicate"
+  provider:         "nano_banana_2" | "replicate" | "recraft"
   provider_job_id:  string | null
   model:            string | null
   url:              string | null
   status:           "pending" | "complete" | "failed"
   created_at: string
+}
+
+export interface EvaluationScore {
+  id:                  string
+  prompt_output_id:    string
+  generated_image_id:  string | null
+  project_id:          string
+  reference_image:     string | null
+  generated_image_url: string | null
+  scores:              string | null  // JSON: { composition, typography, palette, layout, elements }
+  critique:            string | null  // editable by user
+  iteration:           number
+  created_at:          string
 }
 
 /** Project row joined with its latest DesignSchema and GrammarBlueprint */

@@ -30,7 +30,7 @@ Phases: 1 of 2 complete
 | Phase | Name | Plans | Status | Completed |
 |-------|------|-------|--------|-----------|
 | 9 | Extraction Upgrade | 1 | ✅ Complete | 2026-03-31 |
-| 10 | Evaluation + Refinement Loop | TBD | Not started | - |
+| 10 | Evaluation + Refinement Loop | 3 | Planning | - |
 
 ## Phase Details
 

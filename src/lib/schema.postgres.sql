@@ -62,7 +62,21 @@ CREATE TABLE IF NOT EXISTS generated_images (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS evaluation_scores (
+  id                  TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  prompt_output_id    TEXT NOT NULL REFERENCES prompt_outputs(id) ON DELETE CASCADE,
+  generated_image_id  TEXT REFERENCES generated_images(id) ON DELETE SET NULL,
+  project_id          TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  reference_image     TEXT,
+  generated_image_url TEXT,
+  scores              JSONB,
+  critique            TEXT,
+  iteration           INTEGER NOT NULL DEFAULT 1,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_design_schemas_project_id     ON design_schemas(project_id);
 CREATE INDEX IF NOT EXISTS idx_grammar_blueprints_project_id ON grammar_blueprints(project_id);
 CREATE INDEX IF NOT EXISTS idx_prompt_outputs_project_id     ON prompt_outputs(project_id);
 CREATE INDEX IF NOT EXISTS idx_generated_images_output_id    ON generated_images(prompt_output_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_scores_output_id   ON evaluation_scores(prompt_output_id);

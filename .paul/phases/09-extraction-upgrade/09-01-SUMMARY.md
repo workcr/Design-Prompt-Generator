@@ -73,7 +73,7 @@ completed: 2026-03-31T00:30:00Z
 | AC-6: `analyze-tab.tsx` updated | Pass | Iterates `type_scale` array, renders role label + 9 fingerprint fields per entry |
 | AC-7: `prompt-tab.tsx` updated | Pass | Reads per-role fingerprints via new local `FieldRow`; lock/unlock at whole `type_scale` key |
 | AC-8: `pnpm typecheck` exits 0 | Pass | Zero errors after FieldRow deviation fix |
-| AC-9: Manual test 2–3 images | Pending | Awaiting user verification — new schema shape deployed to Vercel |
+| AC-9: Manual test 2–3 images | Pass | Verified 2026-04-01 on localhost — `classification: "grotesque-sans"`, `editorialStyle: "Swiss International rationalist"`, `frame.bleed: false`, `palette.character: "high-contrast monochromatic"` all populated |
 
 ## Accomplishments
 

@@ -10,10 +10,10 @@ See: .paul/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Milestone: v0.2 — Output Quality Loop 🔄 Active
-Phase: 10 of 10 (Evaluation + Refinement Loop) — Not started
-Plan: None yet — awaiting /paul:plan
-Status: Phase 9 complete — ready to plan Phase 10
-Last activity: 2026-03-31 — Phase 9 complete (UNIFY done)
+Phase: 10 of 10 (Evaluation + Refinement Loop) — Planning
+Plan: 10-01 — Agent D + Evaluate API (approved, ready to apply)
+Status: Plan 10-01 created — ready to execute
+Last activity: 2026-04-01 — Plan 10-01 written
 
 Progress (v0.1 — shipped ✅):
 - v0.1:      [██████████] 100% ✅ SHIPPED
@@ -21,14 +21,14 @@ Progress (v0.1 — shipped ✅):
 Progress (v0.2 — active 🔄):
 - Milestone: [█████░░░░░] 50%
 - Phase 9:   [██████████] 100% ✅ Complete
-- Phase 10:  [░░░░░░░░░░] 0% — Evaluation + Refinement Loop
+- Phase 10:  [██░░░░░░░░] 20% — Planning (3 plans total: 10-01 ready, 10-02/03 pending)
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [Phase 9 complete — run /paul:plan for Phase 10]
+  ✓        ○        ○     [Plan 10-01 created — run /paul:apply]
 ```
 
 ## Accumulated Context
@@ -104,10 +104,10 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31
-Stopped at: Phase 9 complete — SUMMARY written, ROADMAP updated, loop closed
-Next action: /paul:plan (Phase 10 — Evaluation + Refinement Loop)
-Resume context: Recommended: manual test /api/analyze with 2–3 images before planning Phase 10 (AC-9 still pending)
+Last session: 2026-04-01
+Stopped at: Plan 10-01 created — .paul/phases/10-evaluation-refinement-loop/10-01-PLAN.md
+Next action: /paul:apply (Plan 10-01)
+Resume context: Phase 10 split: 10-01 (DB + evaluate API), 10-02 (refine + Recraft), 10-03 (Output Tab UI). Recraft replaces Ideogram. RECRAFT_API_KEY needed before 10-02.
 
 ---
 *STATE.md — Updated after every significant action*
