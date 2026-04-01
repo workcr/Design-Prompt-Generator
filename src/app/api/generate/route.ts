@@ -3,6 +3,9 @@ import { z } from "zod"
 import crypto from "crypto"
 import { getSupabaseServer } from "@/lib/supabase-server"
 import { getImageGenProvider, env } from "@/lib/env"
+
+// Image generation (Gemini/Replicate) can take 20-45s — extend beyond the 10s default
+export const maxDuration = 60
 import type { PromptOutput } from "@/types/db"
 
 const RequestSchema = z.object({

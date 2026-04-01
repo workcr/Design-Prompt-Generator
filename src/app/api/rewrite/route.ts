@@ -3,6 +3,9 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { streamText } from "ai"
 import { getSupabaseServer } from "@/lib/supabase-server"
+
+// Streaming AI response — extend beyond the 10s default
+export const maxDuration = 60
 import { getTextProvider } from "@/lib/ai"
 import { getTextModel } from "@/lib/env"
 import {

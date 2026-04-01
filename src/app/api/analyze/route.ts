@@ -3,6 +3,9 @@ import { z } from "zod"
 import { generateObject } from "ai"
 import crypto from "crypto"
 import { getSupabaseServer } from "@/lib/supabase-server"
+
+// Gemini vision analysis can take 15-30s — extend beyond the 10s default
+export const maxDuration = 60
 import { getVisionProvider } from "@/lib/ai"
 import {
   DesignExtractionSchema,

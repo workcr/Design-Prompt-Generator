@@ -3,6 +3,9 @@ import { z } from "zod"
 import { generateObject } from "ai"
 import { getSupabaseServer } from "@/lib/supabase-server"
 import { getTextProvider } from "@/lib/ai"
+
+// AI structured extraction — extend beyond the 10s default
+export const maxDuration = 60
 import {
   GrammarBlueprintExtractionSchema,
   GRAMMAR_DISTILLATION_PROMPT,
