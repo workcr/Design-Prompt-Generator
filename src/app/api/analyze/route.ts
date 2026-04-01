@@ -52,6 +52,8 @@ export async function POST(request: Request) {
     const imageBuffer = Buffer.from(await blob.arrayBuffer())
 
     // 4. Run structured extraction via AI SDK
+    // The vision provider uses compatibility:"compatible" (chat completions endpoint)
+    // which serialises Buffer → data:image/<type>;base64,... correctly for Ollama.
     const { object: extraction } = await generateObject({
       model: getVisionProvider(),
       schema: DesignExtractionSchema,

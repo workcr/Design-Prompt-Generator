@@ -17,7 +17,10 @@ export function getVisionProvider() {
       baseURL: `${env.OLLAMA_BASE_URL}/v1`,
       apiKey: "ollama",
     })
-    return ollama(getVisionModel())
+    // Use .chat() to force /v1/chat/completions instead of /v1/responses.
+    // Ollama's Responses API has incomplete image support; the Chat
+    // Completions endpoint handles base64 image buffers correctly.
+    return ollama.chat(getVisionModel())
   }
 
   if (!env.GOOGLE_GENERATIVE_AI_API_KEY) {
