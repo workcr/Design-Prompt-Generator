@@ -63,11 +63,12 @@ export const getImageGenProvider = (): "nano_banana_2" | "replicate" => {
 
 /**
  * Resolves the vision/analysis model ID for Agent A.
- * Local: Ollama qwen3-vl:30b  |  Production: Gemini 2.0 Flash
- * Note: gemini-1.5-flash was deprecated; gemini-2.0-flash is GA with full vision support.
+ * Local: Ollama qwen3-vl:30b  |  Production: Gemini 2.5 Flash
+ * Note: gemini-1.5-flash + gemini-2.0-flash unavailable for new API users.
+ * gemini-2.5-flash-preview-04-17 is the current available multimodal model.
  */
 export const getVisionModel = (): string =>
-  isLocalMode() ? "qwen3-vl:30b" : "gemini-2.0-flash"
+  isLocalMode() ? "qwen3-vl:30b" : "gemini-2.5-flash-preview-04-17"
 
 /**
  * Resolves the text model ID for Agents B1 and B2.
