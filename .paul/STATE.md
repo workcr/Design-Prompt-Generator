@@ -5,18 +5,18 @@
 See: .paul/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Convert any image into a fully controllable, style-aware image-gen prompt — without losing structural design logic or writing quality
-**Current focus:** Phase 8 — Production Deploy
+**Current focus:** Milestone v0.1 — Local Pipeline MVP ✅ SHIPPED
 
 ## Current Position
 
-Milestone: v0.1 — Local Pipeline MVP
-Phase: 8 of 8 (Production Deploy) — 🔄 In progress
-Plan: 08-03 — Storage Migration + First Vercel Deploy 🔄 In progress (PLAN complete)
-Status: Plan 08-03 planned — awaiting bucket creation (Task 1 checkpoint)
-Last activity: 2026-03-30 — Plan 08-03 PLAN complete
+Milestone: v0.1 — Local Pipeline MVP ✅ SHIPPED
+Phase: 8 of 8 (Production Deploy) — ✅ Complete
+Plan: 08-03 — Storage Migration + First Vercel Deploy ✅ Complete
+Status: Phase 8 complete — app live on Vercel, full flow verified in production
+Last activity: 2026-03-31 — Production smoke test passed
 
 Progress:
-- Milestone: [█████████░] 90%
+- Milestone: [██████████] 100% ✅ SHIPPED
 - Phase 1:   [██████████] 100% ✅
 - Phase 2:   [██████████] 100% ✅
 - Phase 3:   [██████████] 100% ✅
@@ -24,14 +24,14 @@ Progress:
 - Phase 5:   [██████████] 100% ✅
 - Phase 6:   [██████████] 100% ✅
 - Phase 7:   [██████████] 100% ✅
-- Phase 8:   [██████░░░░] 66% 🔄
+- Phase 8:   [██████████] 100% ✅
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ·        ·     [08-03 planned — awaiting Task 1 bucket setup]
+  ✓        ✓        ✓     [08-03 complete — Phase 8 done — Milestone v0.1 SHIPPED]
 ```
 
 ## Accumulated Context
@@ -70,6 +70,8 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | Fresh `getSupabaseServer()` in onFinish callback | 08-02 | Stateless HTTP client — inline creation is correct for serverless callbacks |
 | 3-query join for prompt-outputs | 08-02 | No correlated subquery API in Supabase JS; batched .in() + Map is O(n) |
 | page.tsx server component also calls getDb() directly | 08-02 | Scope was API routes — server component missed; hotfix commit d136180 |
+| `maxDuration = 60` on all AI routes | 08-03 | Vercel Hobby default is 10s; Gemini/OpenAI calls exceed this — required for analyze, distill, rewrite, generate |
+| `gemini-2.5-flash` as vision model (not 1.5 or 2.0) | 08-03 | gemini-1.5-flash + gemini-2.0-flash deprecated for new API users; confirmed via ListModels API |
 | Prefer:wait header for Replicate | 06-01 | Synchronous prediction — no polling loop needed for flux-schnell |
 | Gemini image gen via direct REST (not AI SDK) | 06-02 | experimental_generateImage targets Imagen (Vertex/allowlisted); gemini-2.5-flash-image:generateContent works with standard keys |
 | gemini-2.5-flash-image model name | 06-02 | imagen-3.0-* uses :predict not :generateContent; gemini-2.0-flash-exp-image-generation retired; gemini-2.5-flash-image is current |
@@ -84,7 +86,7 @@ Decisions imported from PLANNING.md at init:
 
 ### Git State
 
-Last commit: a5fd356 (Phase 7 — feat(07-polish): Polish + Local-First UX complete)
+Last commit: b4a80a8 (chore(analyze): remove debug detail field from 500 response)
 Branch: main
 
 ### Deferred Issues
@@ -105,10 +107,10 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30
-Stopped at: Plan 08-03 PLAN written — awaiting Supabase Storage bucket creation
-Next action: Create "uploads" bucket in Supabase Dashboard → Storage, then type "done"
-Resume context: .paul/phases/08-production-deploy/08-03-PLAN.md
+Last session: 2026-03-31
+Stopped at: Milestone v0.1 complete — all 8 phases shipped, production smoke test passed
+Next action: None — milestone complete. Optional: Plan 08-04 for auth + rate limiting, or start Milestone v0.2
+Resume context: .paul/ROADMAP.md
 
 ---
 *STATE.md — Updated after every significant action*
