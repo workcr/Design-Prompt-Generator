@@ -5,33 +5,30 @@
 See: .paul/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Convert any image into a fully controllable, style-aware image-gen prompt — without losing structural design logic or writing quality
-**Current focus:** Milestone v0.1 — Local Pipeline MVP ✅ SHIPPED
+**Current focus:** Milestone v0.2 — Output Quality Loop 🔄 Active
 
 ## Current Position
 
-Milestone: v0.1 — Local Pipeline MVP ✅ SHIPPED
-Phase: 8 of 8 (Production Deploy) — ✅ Complete
-Plan: 08-03 — Storage Migration + First Vercel Deploy ✅ Complete
-Status: Phase 8 complete — app live on Vercel, full flow verified in production
-Last activity: 2026-03-31 — Production smoke test passed
+Milestone: v0.2 — Output Quality Loop 🔄 Active
+Phase: 9 of 10 (Extraction Upgrade) — Not started
+Plan: None yet — awaiting /gsd:plan-phase 9
+Status: v0.2 milestone initialized — ready to plan Phase 9
+Last activity: 2026-03-31 — v0.2 milestone created from PLANNING.md ideation
 
-Progress:
-- Milestone: [██████████] 100% ✅ SHIPPED
-- Phase 1:   [██████████] 100% ✅
-- Phase 2:   [██████████] 100% ✅
-- Phase 3:   [██████████] 100% ✅
-- Phase 4:   [██████████] 100% ✅
-- Phase 5:   [██████████] 100% ✅
-- Phase 6:   [██████████] 100% ✅
-- Phase 7:   [██████████] 100% ✅
-- Phase 8:   [██████████] 100% ✅
+Progress (v0.1 — shipped ✅):
+- v0.1:      [██████████] 100% ✅ SHIPPED
+
+Progress (v0.2 — active 🔄):
+- Milestone: [░░░░░░░░░░] 0%
+- Phase 9:   [░░░░░░░░░░] 0% — Extraction Upgrade
+- Phase 10:  [░░░░░░░░░░] 0% — Evaluation + Refinement Loop
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [08-03 complete — Phase 8 done — Milestone v0.1 SHIPPED]
+  ·        ·        ·     [Phase 9 not yet planned — run /gsd:plan-phase 9]
 ```
 
 ## Accumulated Context
@@ -108,9 +105,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-31
-Stopped at: Milestone v0.1 complete — all 8 phases shipped, production smoke test passed
-Next action: None — milestone complete. Optional: Plan 08-04 for auth + rate limiting, or start Milestone v0.2
-Resume context: .paul/ROADMAP.md
+Stopped at: v0.2 milestone initialized — PLANNING.md updated with Phase 9 + 10 detail
+Next action: Run /gsd:plan-phase 9 to plan Phase 9-01 (Extraction Upgrade)
+Resume context: .paul/ROADMAP.md — Phase 9 scope + .paul/phases/09-extraction-upgrade/ (to be created)
 
 ---
 *STATE.md — Updated after every significant action*

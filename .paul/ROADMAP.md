@@ -2,15 +2,17 @@
 
 ## Overview
 
-Eight phases take the project from a bare Next.js scaffold to a deployed, authenticated web product. The first six phases deliver the full local pipeline — image in, prompt out, image generated. Phase 7 polishes it into a daily-usable tool. Phase 8 ships it to Vercel with Supabase and auth. Each phase is independently testable and delivers a user-facing outcome.
+The project evolves across two milestones. v0.1 delivered the full local pipeline from image to generated output, shipped on Vercel with Supabase. v0.2 closes the quality loop — richer extraction, visual evaluation, user-guided refinement, and Ideogram as a specialist provider for typographic designs.
 
 ## Current Milestone
 
-**v0.1 — Local Pipeline MVP** (v0.1.0)
-Status: In progress
-Phases: 7 of 8 complete
+**v0.2 — Output Quality Loop** (v0.2.0)
+Status: Not started
+Phases: 0 of 2 complete
 
-## Phases
+## Milestones
+
+### v0.1 — Local Pipeline MVP ✅ SHIPPED (2026-03-31)
 
 | Phase | Name | Plans | Status | Completed |
 |-------|------|-------|--------|-----------|
@@ -21,7 +23,14 @@ Phases: 7 of 8 complete
 | 5 | Agent B2 + Prompt Export Panel | 3 | ✅ Complete | 2026-03-29 |
 | 6 | Image Generation + Comparison | 2 | ✅ Complete | 2026-03-30 |
 | 7 | Polish + Local-First UX | 2 | ✅ Complete | 2026-03-30 |
-| 8 | Production Deploy | TBD | Not started | - |
+| 8 | Production Deploy | 3 | ✅ Complete | 2026-03-31 |
+
+### v0.2 — Output Quality Loop
+
+| Phase | Name | Plans | Status | Completed |
+|-------|------|-------|--------|-----------|
+| 9 | Extraction Upgrade | TBD | Not started | - |
+| 10 | Evaluation + Refinement Loop | TBD | Not started | - |
 
 ## Phase Details
 
@@ -161,24 +170,55 @@ Phases: 7 of 8 complete
 
 ---
 
-### Phase 8: Production Deploy
+### Phase 8: Production Deploy ✅
 
 **Goal:** Publicly accessible hosted version with auth and persistent storage
-**Depends on:** Phase 7 (polished local product)
-**Research:** Likely (Supabase auth + storage swap, Vercel edge middleware, env hardening)
-**Research topics:** Supabase magic link auth with Next.js App Router; Vercel edge rate limiting
-
-**Scope:**
-- Supabase DB + Storage swap (replaces SQLite + local /uploads)
-- Vercel deploy config + environment variable setup
-- Edge rate limiting middleware
-- Supabase Auth (magic link)
-- Auth-protected routes + session handling
-- End-to-end production smoke test
+**Completed:** 2026-03-31
 
 **Plans:**
-- [ ] 08-01: TBD during /paul:plan
+- [x] 08-01: Supabase schema + all API routes migrated from SQLite — 2026-03-31
+- [x] 08-02: Image storage migrated to Supabase Storage + Vercel deploy — 2026-03-31
+- [x] 08-03: Production smoke test, Gemini model upgrades, Vercel timeout fixes — 2026-03-31
+
+---
+
+## v0.2 — Output Quality Loop
+
+### Phase 9: Extraction Upgrade
+
+**Goal:** Agent A produces semantically rich schemas that capture typeface character, composition treatment, and palette intent — eliminating vocabulary gaps in the final prompt
+**Depends on:** Phase 8 (production pipeline running)
+**Research:** Unlikely (prompt engineering + Zod schema enrichment, no new dependencies)
+
+**Scope:**
+- Rewrite `DESIGN_ANALYSIS_PROMPT` with richer vocabulary: serif subtype classification, stroke contrast, editorial style class, explicit bleed/crop detection, palette character
+- Enrich `DesignExtractionSchema` (Zod): add `fingerprint` sub-object to `type_scale` (`classification`, `stroke_contrast`, `weight`, `editorial_style`); add `crop_treatment`, `composition_notes`, `bleed` to `frame`; add `character` to `palette`
+- No Supabase migration needed — `type_scale`, `frame`, `palette` already stored as JSONB
+- Manual test: 5–10 diverse reference images, compare old vs new schema quality
+
+**Plans:**
+- [ ] 09-01: TBD during plan-phase
+
+---
+
+### Phase 10: Evaluation + Refinement Loop
+
+**Goal:** Closed feedback loop — users diagnose where output diverged, guide refinement with editable critique, iterate until satisfied
+**Depends on:** Phase 9 (richer extraction improves raw material going into the loop)
+**Research:** Likely (Ideogram API, evaluation prompt design, iteration state management)
+**Research topics:** Ideogram v2/v3 model quality for typographic designs; evaluation prompt structure for 5-dimension visual scoring
+
+**Scope:**
+- Supabase table: `evaluation_scores` (id, prompt_output_id, project_id, reference_image, generated_image_url, scores JSONB, verdicts JSONB, critique TEXT, iteration INT, created_at)
+- `POST /api/evaluate` — Agent D: Gemini 2.5 Flash vision, structured 5-dimension scores + verdicts (match/partial/miss) + critique text
+- `POST /api/refine` — user-edited critique → Agent B2 rewrite → /api/generate → new GeneratedImage
+- `PATCH /api/evaluation-scores/[id]` — save user critique edits before resubmit
+- Ideogram as third image gen provider (IMAGE_GEN_PROVIDER=ideogram, IDEOGRAM_API_KEY)
+- Output tab UI: "Evaluate" button → verdict chips (✓/⚠/✗) + editable critique textarea → "Refine" → side-by-side new image → iteration history strip → "Accept"
+
+**Plans:**
+- [ ] 10-01: TBD during plan-phase
 
 ---
 *Roadmap created: 2026-03-28*
-*Last updated: 2026-03-30 — Phase 7 complete*
+*Last updated: 2026-03-31 — v0.2 milestone initialized*
