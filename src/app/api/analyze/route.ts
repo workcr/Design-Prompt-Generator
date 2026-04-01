@@ -100,8 +100,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ id: (schema as DesignSchema).id, schema: schema as DesignSchema })
   } catch (error) {
     console.error("[POST /api/analyze]", error)
+    const msg = error instanceof Error ? error.message : String(error)
     return NextResponse.json(
-      { error: "Analysis failed" },
+      { error: "Analysis failed", detail: msg },
       { status: 500 }
     )
   }
