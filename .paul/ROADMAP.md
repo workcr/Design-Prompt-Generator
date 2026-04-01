@@ -192,8 +192,18 @@ Phases: 0 of 2 complete
 
 **Scope:**
 - Rewrite `DESIGN_ANALYSIS_PROMPT` with richer vocabulary: serif subtype classification, stroke contrast, editorial style class, explicit bleed/crop detection, palette character
-- Enrich `DesignExtractionSchema` (Zod): add `fingerprint` sub-object to `type_scale` (`classification`, `stroke_contrast`, `weight`, `editorial_style`); add `crop_treatment`, `composition_notes`, `bleed` to `frame`; add `character` to `palette`
+- Enrich `DesignExtractionSchema` (Zod): add `fingerprint` sub-object to each `type_scale` role entry (full spec below); add `crop_treatment`, `composition_notes`, `bleed` to `frame`; add `character` to `palette`
 - No Supabase migration needed — `type_scale`, `frame`, `palette` already stored as JSONB
+- **`fingerprint` field spec** (Figma Typography panel, filtered to visually detectable fields only):
+  - Core: `fontFamily` (string|null), `fontStyle` (string), `fontWeight` (100–900), `fontSize` ("display"|"large"|"medium"|"small"|"caption")
+  - Inferred: `classification` ("high-contrast-serif"|"low-contrast-serif"|"slab-serif"|"geometric-sans"|"humanist-sans"|"grotesque-sans"|"monospace"|"display"|"script"|"decorative"), `strokeContrast` ("none"|"low"|"medium"|"high"|"extreme"), `editorialStyle` (free text)
+  - Spacing: `letterSpacing` ("very-tight"|"tight"|"normal"|"wide"|"very-wide"), `lineHeight` ("compressed"|"tight"|"normal"|"loose"|"open")
+  - Case/Align: `case` ("none"|"uppercase"|"lowercase"|"title"|"small-caps"), `alignment` ("left"|"center"|"right"|"justified")
+  - Decorative: `decoration` (string[])
+  - Numbers: `numberStyle` ("lining"|"old-style"|null), `numberPosition` ("normal"|"superscript"|"subscript"|null)
+  - Variable: `variable` ({ weight: number|null, slant: number|null } | null)
+  - Layout interactions: `hangingPunctuation` (boolean), `paragraphIndent` (boolean), `listStyle` ("none"|"unordered"|"ordered")
+  - *Omitted (not detectable in raster images)*: verticalTrim, caseSensitiveForms, capitalSpacing, all OpenType feature flags (contextualAlternates, rareLigatures, characterVariants, stylisticSets, kerningPairs), scientificInferiors
 - Manual test: 5–10 diverse reference images, compare old vs new schema quality
 
 **Plans:**

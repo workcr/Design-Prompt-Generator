@@ -111,10 +111,30 @@ LOCAL_MODE=false → Gemini 2.5 Flash (Agent A + Agent D) + GPT-4o mini (B1, B2)
     "headline": "display/bleed",
     "body": "12px/1.4",
     "fingerprint": {
-      "classification": "high-contrast-serif",
-      "stroke_contrast": "extreme",
-      "weight": "regular",
-      "editorial_style": "Didot-class"
+      "fontFamily":        "Didot",
+      "fontStyle":         "Regular",
+      "fontWeight":        400,
+      "fontSize":          "display",
+
+      "classification":    "high-contrast-serif",
+      "strokeContrast":    "extreme",
+      "editorialStyle":    "Didot-class",
+
+      "letterSpacing":     "normal",
+      "lineHeight":        "compressed",
+
+      "case":              "uppercase",
+      "alignment":         "left",
+      "decoration":        ["none"],
+
+      "numberStyle":       null,
+      "numberPosition":    null,
+
+      "variable":          null,
+
+      "hangingPunctuation": false,
+      "paragraphIndent":   false,
+      "listStyle":         "none"
     }
   },
   "elements": [],
@@ -386,6 +406,7 @@ Desktop-first. The editor workspace is complex enough that mobile is out of scop
 13. **Agent D reuses Gemini 2.5 Flash** — no new API key or provider needed; same vision model used for extraction (Agent A) is used for evaluation (Agent D); one key, two roles
 14. **User-editable critique before refinement** — Agent D's critique is a starting point, not a directive; users may disagree with the AI's assessment or want to reprioritize which gap to fix first; editable critique makes the loop collaborative
 15. **Ideogram as specialist provider, not replacement** — Gemini 2.5 Flash image gen remains primary; Ideogram added as a targeted choice for text-heavy, typographic, and editorial compositions where it consistently outperforms generalist models
+16. **Typography fingerprint derived from Figma's schema, not copied from it** — Figma's Typography panel has 38+ fields covering all OpenType feature flags; 22 are invisible in a raster image (kerningPairs, contextualAlternates, rareLigatures, all characterVariants/stylisticSets, etc.). The fingerprint includes the 16 visually detectable Figma fields plus 3 inference fields Agent A adds (classification, strokeContrast, editorialStyle). Layout-interaction fields (hangingPunctuation, paragraphIndent, listStyle) live on `type_scale.fingerprint` because they affect how type is rendered, not how the frame is shaped.
 4. **GrammarBlueprint as a reusable entity** — one blueprint can serve many projects; users build a library of prompt styles over time
 5. **Streaming for all agent routes** — long-running LLM calls need progressive feedback; SSE via Vercel AI SDK is simplest
 6. **Desktop-first UI** — the editor workspace requires horizontal space; mobile complexity deferred
