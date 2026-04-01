@@ -10,10 +10,10 @@ See: .paul/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Milestone: v0.1 — Local Pipeline MVP
-Phase: 8 of 8 (Production Deploy) — Not started
-Plan: Not started
-Status: Phase 7 complete — ready to plan Phase 8
-Last activity: 2026-03-30 — Phase 7 complete, transitioned to Phase 8
+Phase: 8 of 8 (Production Deploy) — 🔄 In progress
+Plan: 08-03 — Storage Migration + First Vercel Deploy 🔄 In progress (PLAN complete)
+Status: Plan 08-03 planned — awaiting bucket creation (Task 1 checkpoint)
+Last activity: 2026-03-30 — Plan 08-03 PLAN complete
 
 Progress:
 - Milestone: [█████████░] 90%
@@ -24,14 +24,14 @@ Progress:
 - Phase 5:   [██████████] 100% ✅
 - Phase 6:   [██████████] 100% ✅
 - Phase 7:   [██████████] 100% ✅
-- Phase 8:   [░░░░░░░░░░] 0% ⬜
+- Phase 8:   [██████░░░░] 66% 🔄
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [Phase 7 complete — ready for Phase 8]
+  ✓        ·        ·     [08-03 planned — awaiting Task 1 bucket setup]
 ```
 
 ## Accumulated Context
@@ -65,6 +65,11 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | Blueprint library in idle/error phase only | 07-02 | Distill form is the entry point; library is curation |
 | `renamingId` single nullable string for project rename | 07-02 | One card editable at a time; no PATCH race conditions |
 | Export `parsedSchema` (not raw DesignSchema) for JSON export | 07-02 | Typed objects more useful than double-encoded TEXT |
+| `serverExternalPackages: ['better-sqlite3']` in next.config.ts | 08-02 | Prevents Vercel from bundling the native addon; getDb() never called in prod |
+| `.maybeSingle()` for optional rows, `.single()` for required | 08-02 | maybeSingle returns null cleanly; single throws PGRST116 on missing |
+| Fresh `getSupabaseServer()` in onFinish callback | 08-02 | Stateless HTTP client — inline creation is correct for serverless callbacks |
+| 3-query join for prompt-outputs | 08-02 | No correlated subquery API in Supabase JS; batched .in() + Map is O(n) |
+| page.tsx server component also calls getDb() directly | 08-02 | Scope was API routes — server component missed; hotfix commit d136180 |
 | Prefer:wait header for Replicate | 06-01 | Synchronous prediction — no polling loop needed for flux-schnell |
 | Gemini image gen via direct REST (not AI SDK) | 06-02 | experimental_generateImage targets Imagen (Vertex/allowlisted); gemini-2.5-flash-image:generateContent works with standard keys |
 | gemini-2.5-flash-image model name | 06-02 | imagen-3.0-* uses :predict not :generateContent; gemini-2.0-flash-exp-image-generation retired; gemini-2.5-flash-image is current |
@@ -79,7 +84,7 @@ Decisions imported from PLANNING.md at init:
 
 ### Git State
 
-Last commit: 64cd189 (Phase 4)
+Last commit: a5fd356 (Phase 7 — feat(07-polish): Polish + Local-First UX complete)
 Branch: main
 
 ### Deferred Issues
@@ -101,9 +106,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 7 complete — all plans unified
-Next action: /paul:plan for Phase 8 (Production Deploy)
-Resume context: .paul/ROADMAP.md
+Stopped at: Plan 08-03 PLAN written — awaiting Supabase Storage bucket creation
+Next action: Create "uploads" bucket in Supabase Dashboard → Storage, then type "done"
+Resume context: .paul/phases/08-production-deploy/08-03-PLAN.md
 
 ---
 *STATE.md — Updated after every significant action*
