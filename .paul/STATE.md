@@ -33,7 +33,7 @@ Progress (v0.3 — active 🔄):
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ·        ·     [Plan 11-01 approved? → run /paul:apply]
+  ✓        ✓        ·     [run /paul:unify]
 ```
 
 ## Accumulated Context
