@@ -10,10 +10,10 @@ See: .paul/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Milestone: v0.3 — Self-Improving Extraction Loop 🔄 Active
-Phase: 11 of 12 (Schema-Corrective Refinement Loop) — 🔲 Plan ready
-Plan: 11-01 — pending approval
-Status: Plan 11-01 written, awaiting user approval to APPLY
-Last activity: 2026-04-02 — Plan 11-01 created; Phase 11 + 12 added to roadmap
+Phase: 11 of 12 (Schema-Corrective Refinement Loop) — 🔄 In Progress (1/2 plans)
+Plan: 11-01 ✅ Complete — ready for Plan 11-02
+Status: Plan 11-01 unified. Next: /paul:plan for Plan 11-02 (Output Tab 2-Step Refine UI)
+Last activity: 2026-04-02 — Plan 11-01 applied + unified
 
 Progress (v0.1 — shipped ✅):
 - v0.1:      [██████████] 100% ✅ SHIPPED
@@ -24,8 +24,8 @@ Progress (v0.2 — complete ✅):
 - Phase 10:  [██████████] 100% ✅ Complete
 
 Progress (v0.3 — active 🔄):
-- Milestone: [░░░░░░░░░░]   0%
-- Phase 11:  [░░░░░░░░░░]   0% (Plan 11-01 pending approval)
+- Milestone: [██░░░░░░░░]  25%
+- Phase 11:  [█████░░░░░]  50% (1/2 plans complete)
 - Phase 12:  [░░░░░░░░░░]   0% (planned)
 
 ## Loop Position
@@ -33,7 +33,7 @@ Progress (v0.3 — active 🔄):
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ·     [run /paul:unify]
+  ✓        ✓        ✓     [Loop closed — /paul:plan for Plan 11-02]
 ```
 
 ## Accumulated Context
@@ -73,6 +73,9 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | 3-query join for prompt-outputs | 08-02 | No correlated subquery API in Supabase JS; batched .in() + Map is O(n) |
 | page.tsx server component also calls getDb() directly | 08-02 | Scope was API routes — server component missed; hotfix commit d136180 |
 | `maxDuration = 60` on all AI routes | 08-03 | Vercel Hobby default is 10s; Gemini/OpenAI calls exceed this — required for analyze, distill, rewrite, generate |
+| `z.record(z.string(), z.unknown())` not `z.record(z.unknown())` | 11-01 | This Zod version requires explicit key + value type args — apply to all future record schemas |
+| Supabase JSONB → cast via `as unknown as T` not JSON.parse | 11-01 | JSONB columns return parsed objects from Supabase JS client; db.ts types them as string — cast without parsing |
+| correction_memories insert non-fatal | 11-01 | Memory write failure shouldn't abort the refine cycle — console.error only |
 | `gemini-2.5-flash` as vision model (not 1.5 or 2.0) | 08-03 | gemini-1.5-flash + gemini-2.0-flash deprecated for new API users; confirmed via ListModels API |
 | Prefer:wait header for Replicate | 06-01 | Synchronous prediction — no polling loop needed for flux-schnell |
 | Gemini image gen via direct REST (not AI SDK) | 06-02 | experimental_generateImage targets Imagen (Vertex/allowlisted); gemini-2.5-flash-image:generateContent works with standard keys |
@@ -110,9 +113,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-02
-Stopped at: Plan 11-01 written and awaiting approval
-Next action: User approves Plan 11-01 → /paul:apply
-Resume context: v0.3 scoped with Phases 11 + 12. Phase 12 uses pgvector (text-embedding-004, 768 dims) for cross-project lesson retrieval. Phase 11 creates correction_memories table with embedding = NULL as the Phase 12 feed. User also needs to run updated schema.postgres.sql in Supabase (adds correction_memories table + CREATE EXTENSION vector).
+Stopped at: Plan 11-01 applied + unified
+Next action: /paul:plan for Plan 11-02 (Output Tab 2-Step Refine UI)
+Resume context: Plan 11-01 shipped. /api/refine now returns { prompt_output_id, iteration } — no url. output-tab.tsx refine() currently expects url and will break until Plan 11-02 patches it. DO NOT deploy to Vercel until Plan 11-02 is complete. User also needs to run updated schema.postgres.sql in Supabase to create correction_memories table before production deploy.
 
 ---
 *STATE.md — Updated after every significant action*
