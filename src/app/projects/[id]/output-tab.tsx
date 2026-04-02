@@ -60,6 +60,7 @@ export default function OutputTab({ projectId }: { projectId: string }) {
   const [critiqueText, setCritiqueText] = useState("")
   const [evalError,    setEvalError]    = useState("")
   const [iteration,    setIteration]    = useState(1)
+  const [refineStep,   setRefineStep]   = useState<"correcting" | "generating" | null>(null)
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -107,6 +108,7 @@ export default function OutputTab({ projectId }: { projectId: string }) {
     setCritiqueText("")
     setEvalError("")
     setIteration(1)
+    setRefineStep(null)
   }
 
   async function generate() {
@@ -216,9 +218,11 @@ export default function OutputTab({ projectId }: { projectId: string }) {
   async function refine() {
     if (!evalData?.id) return
     setEvalPhase("refining")
+    setRefineStep("correcting")
     setEvalError("")
     try {
-      const res = await fetch("/api/refine", {
+      // Step 1: Schema correction + prompt rebuild (Agent E + B2)
+      const refineRes = await fetch("/api/refine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -226,30 +230,50 @@ export default function OutputTab({ projectId }: { projectId: string }) {
           evaluation_score_id: evalData.id,
         }),
       })
-      if (!res.ok) {
-        const ct = res.headers.get("content-type") ?? ""
+      if (!refineRes.ok) {
+        const ct = refineRes.headers.get("content-type") ?? ""
         const err = ct.includes("application/json")
-          ? (await res.json()) as { error?: string }
-          : { error: `Server error ${res.status}` }
+          ? (await refineRes.json()) as { error?: string }
+          : { error: `Server error ${refineRes.status}` }
         throw new Error(err.error ?? "Refinement failed")
       }
-      const data = (await res.json()) as {
-        prompt_output_id:   string
-        generated_image_id: string
-        url:                string
-        iteration:          number
+      const refineData = (await refineRes.json()) as {
+        prompt_output_id: string
+        iteration:        number
       }
-      // Update the active output's image URL in-place
+
+      // Step 2: Image generation from the corrected prompt
+      setRefineStep("generating")
+      const genRes = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outputId: refineData.prompt_output_id }),
+      })
+      if (!genRes.ok) {
+        const ct = genRes.headers.get("content-type") ?? ""
+        const err = ct.includes("application/json")
+          ? (await genRes.json()) as { error?: string }
+          : { error: `Server error ${genRes.status}` }
+        throw new Error(err.error ?? "Image generation failed")
+      }
+      const genData = (await genRes.json()) as { id: string; url: string; provider: string }
+
+      // Update active output: id → new prompt_output_id (fixes next Evaluate lookup),
+      // image_url → new generated image, image_provider → new provider
       setOutputs(prev =>
         prev.map((o, i) =>
-          i === activeIndex ? { ...o, image_url: data.url } : o
+          i === activeIndex
+            ? { ...o, id: refineData.prompt_output_id, image_url: genData.url, image_provider: genData.provider }
+            : o
         )
       )
-      setIteration(data.iteration)
+      setIteration(refineData.iteration)
+      setRefineStep(null)
       setEvalPhase("idle")
       setEvalData(null)
       setCritiqueText("")
     } catch (e) {
+      setRefineStep(null)
       setEvalError(e instanceof Error ? e.message : "Refinement failed")
       setEvalPhase("error")
     }
@@ -474,7 +498,7 @@ export default function OutputTab({ projectId }: { projectId: string }) {
                   {evalPhase === "refining" ? (
                     <span className="flex items-center gap-2">
                       <Spinner />
-                      Refining…
+                      {refineStep === "generating" ? "Generating…" : "Correcting extraction…"}
                     </span>
                   ) : (
                     "Refine"
