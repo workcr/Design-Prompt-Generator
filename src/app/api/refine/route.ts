@@ -9,6 +9,7 @@ import {
   B2_REWRITE_SYSTEM_PROMPT,
   buildRewriteInput,
 } from "@/lib/schemas/prompt-rewrite"
+import { computeEmbedding } from "@/lib/embeddings"
 import {
   EVAL_DIMENSIONS,
   SchemaCorrectionSchema,
@@ -238,7 +239,7 @@ export async function POST(request: Request) {
       }
       schema = newSchemaData as DesignSchema
 
-      // 6e. Write correction_memories rows — one per lesson (embedding = NULL for Phase 12)
+      // 6e. Write correction_memories rows + compute embeddings (Phase 12)
       if (correction.lessons.length > 0) {
         const memoryRows = correction.lessons.map((lesson) => ({
           project_id,
@@ -247,14 +248,33 @@ export async function POST(request: Request) {
           lesson:        lesson.lesson,
           bad_value:     lesson.bad_value,
           correct_value: lesson.correct_value,
-          // embedding intentionally omitted — Phase 12 computes it
+          // embedding computed below after insert
         }))
-        const { error: memoryError } = await supabase
+
+        const { data: insertedMemories, error: memoryError } = await supabase
           .from("correction_memories")
           .insert(memoryRows)
+          .select("id, lesson")
+
         if (memoryError) {
           // Non-fatal — log but don't fail the refine cycle
           console.error("[refine] correction_memories insert failed:", memoryError)
+        } else if (insertedMemories) {
+          // Compute embeddings in parallel — non-fatal, awaited before return so
+          // Vercel doesn't terminate the function before UPDATEs land
+          await Promise.allSettled(
+            insertedMemories.map(async (row) => {
+              const vector = await computeEmbedding(row.lesson as string)
+              if (!vector) return
+              const { error: embErr } = await supabase
+                .from("correction_memories")
+                .update({ embedding: `[${vector.join(",")}]` })
+                .eq("id", row.id as string)
+              if (embErr) {
+                console.error("[refine] embedding update failed for", row.id, embErr)
+              }
+            })
+          )
         }
       }
     } else {
