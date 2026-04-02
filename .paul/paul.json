@@ -7,9 +7,9 @@
     "status": "in_progress"
   },
   "phase": {
-    "number": 11,
-    "name": "Schema-Corrective Refinement Loop",
-    "status": "in_progress"
+    "number": 12,
+    "name": "Cross-Project Correction Memory",
+    "status": "not_started"
   },
   "loop": {
     "plan": null,

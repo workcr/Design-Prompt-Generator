@@ -63,12 +63,19 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 - ✓ **Blueprint library management** — Blueprint tab loads saved blueprints on mount; new distillations prepend to list; Delete button per blueprint via `DELETE /api/blueprints/[id]` — Phase 7
 - ✓ **Project rename** — Inline rename on dashboard project cards via `PATCH /api/projects/[id]`; single-card edit mode; updates in-place — Phase 7
 - ✓ **Schema JSON export** — "Export JSON" button in Analyze tab done state; downloads `schema-{projectId}.json` from `parsedSchema` client-side Blob — Phase 7
+- ✓ **Production deploy** — Vercel + Supabase full pipeline live; all API routes migrated; Gemini 2.5 Flash vision; maxDuration=60 on all AI routes — Phase 8
+- ✓ **Extraction upgrade** — `fingerprint` sub-object per type_scale role (classification, strokeContrast, editorialStyle + 10 spacing/case/decoration fields); `crop_treatment`, `composition_notes`, `bleed` on frame; `character` on palette; DESIGN_ANALYSIS_PROMPT rewrite — Phase 9
+- ✓ **Visual evaluation (Agent D)** — `POST /api/evaluate`: Gemini 2.5 Flash vision scores 5 dimensions (composition, typography, palette, layout, elements) with verdict chips + editable critique textarea — Phase 10
+- ✓ **Refinement loop** — `POST /api/refine` (user-edited critique → Agent B2 rewrite); Output tab Evaluate → Refine → iterate flow; iteration badge; evaluation_scores Supabase table — Phase 10
+- ✓ **Schema-corrective Agent E** — `/api/refine` full rewrite: identifies failing dims (score ≤2 or verdict "miss") → Agent E (Gemini 2.5 Flash vision + `generateObject`) corrects only failing schema fields → forks new `design_schemas` row → B2 rebuilds prompt from corrected data — Phase 11
+- ✓ **correction_memories table** — Supabase table with `embedding vector(768) NULL`; Agent E writes one lesson per corrected field; Phase 12 feed — Phase 11
+- ✓ **2-step refine UI** — `refine()` chains POST /api/refine → POST /api/generate; "Correcting extraction…" → "Generating…" labels; `activeOutput.id` updated to new prompt_output_id after cycle — Phase 11
 
 ### Active (In Progress)
 None.
 
 ### Planned (Next)
-- [ ] Phase 8: Production deploy (Vercel + Supabase + auth)
+- [ ] Phase 12: Cross-Project Correction Memory (embedding compute + Agent A retrieval injection)
 
 ### Out of Scope
 

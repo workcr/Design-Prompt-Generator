@@ -233,7 +233,12 @@ Phases: 2 of 2 complete
 
 ## v0.3 — Self-Improving Extraction Loop
 
-### Phase 11: Schema-Corrective Refinement Loop
+| Phase | Name | Plans | Status | Completed |
+|-------|------|-------|--------|-----------|
+| 11 | Schema-Corrective Refinement Loop | 2 | ✅ Complete | 2026-04-02 |
+| 12 | Cross-Project Correction Memory | 2 | 🔲 Planned | — |
+
+### Phase 11: Schema-Corrective Refinement Loop ✅ Complete (2026-04-02)
 
 **Goal:** Replace the prompt-patching refine loop with critique-driven schema correction. Each Refine cycle identifies failing evaluation dimensions, runs Agent E to fix the extraction fields for those dimensions only, forks a new `design_schemas` row, rebuilds the full prompt from corrected data, and stores transferable lessons in `correction_memories` — the feed table for Phase 12.
 **Depends on:** Phase 10 (evaluation_scores table + /api/evaluate + /api/refine exist)
@@ -249,8 +254,8 @@ Phases: 2 of 2 complete
 **Phase 11→12 data contract:** Each Agent E correction produces one `LessonSchema` entry per corrected field. The `lesson` text is the unit Phase 12 embeds. The `embedding vector(768)` column is created NULL; Phase 12 computes it via `text-embedding-004`.
 
 **Plans:**
-- [ ] 11-01: Agent E + Schema-Corrective Refine Route (backend)
-- [ ] 11-02: Output Tab 2-Step Refine UI
+- [x] 11-01: Agent E + Schema-Corrective Refine Route (backend) — 2026-04-02
+- [x] 11-02: Output Tab 2-Step Refine UI — 2026-04-02
 
 ---
 

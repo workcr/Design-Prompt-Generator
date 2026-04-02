@@ -10,10 +10,10 @@ See: .paul/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Milestone: v0.3 — Self-Improving Extraction Loop 🔄 Active
-Phase: 11 of 12 (Schema-Corrective Refinement Loop) — 🔄 In Progress (1/2 plans)
-Plan: 11-01 ✅ Complete — ready for Plan 11-02
-Status: Plan 11-01 unified. Next: /paul:plan for Plan 11-02 (Output Tab 2-Step Refine UI)
-Last activity: 2026-04-02 — Plan 11-01 applied + unified
+Phase: 12 of 12 (Cross-Project Correction Memory) — 🔲 Not Started
+Plan: None — run /paul:plan to begin Phase 12
+Status: Ready for Phase 12 planning
+Last activity: 2026-04-02 — Phase 11 complete (2/2 plans unified)
 
 Progress (v0.1 — shipped ✅):
 - v0.1:      [██████████] 100% ✅ SHIPPED
@@ -24,16 +24,16 @@ Progress (v0.2 — complete ✅):
 - Phase 10:  [██████████] 100% ✅ Complete
 
 Progress (v0.3 — active 🔄):
-- Milestone: [██░░░░░░░░]  25%
-- Phase 11:  [█████░░░░░]  50% (1/2 plans complete)
-- Phase 12:  [░░░░░░░░░░]   0% (planned)
+- Milestone: [█████░░░░░]  50%
+- Phase 11:  [██████████] 100% ✅ Complete (2/2 plans)
+- Phase 12:  [░░░░░░░░░░]   0% (not started)
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [Loop closed — /paul:plan for Plan 11-02]
+  ·        ·        ·     [Phase 12 not started — run /paul:plan]
 ```
 
 ## Accumulated Context
@@ -91,7 +91,7 @@ Decisions imported from PLANNING.md at init:
 
 ### Git State
 
-Last commit: b4a80a8 (chore(analyze): remove debug detail field from 500 response)
+Last commit: 54b4c36 (feat(output-tab): 2-step refine flow — correcting → generating)
 Branch: main
 
 ### Deferred Issues
@@ -108,14 +108,14 @@ Branch: main
 | Text Fields + Elements per-item editing | 04-02 | M | Phase 7 (Polish) |
 
 ### Blockers/Concerns
-None.
+- Phase 12 (embedding compute) requires `text-embedding-004` API call after each Agent E correction. Confirm `GEMINI_API_KEY` has access (same Google AI Studio key — should be accessible).
 
 ## Session Continuity
 
 Last session: 2026-04-02
-Stopped at: Plan 11-01 applied + unified
-Next action: /paul:plan for Plan 11-02 (Output Tab 2-Step Refine UI)
-Resume context: Plan 11-01 shipped. /api/refine now returns { prompt_output_id, iteration } — no url. output-tab.tsx refine() currently expects url and will break until Plan 11-02 patches it. DO NOT deploy to Vercel until Plan 11-02 is complete. User also needs to run updated schema.postgres.sql in Supabase to create correction_memories table before production deploy.
+Stopped at: Phase 11 complete — both plans applied + unified
+Next action: /paul:plan to begin Phase 12 (Cross-Project Correction Memory)
+Resume context: Phase 11 fully shipped. correction_memories table live in Supabase with embedding vector(768) NULL column. Phase 12 Plan 12-01 computes embeddings via text-embedding-004 and fills the column + adds IVFFlat index. Plan 12-02 injects top-K lessons into DESIGN_ANALYSIS_PROMPT at Agent A analysis time.
 
 ---
 *STATE.md — Updated after every significant action*
