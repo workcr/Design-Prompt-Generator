@@ -31,6 +31,11 @@ interface GeminiImageResponse {
   error?: { message: string }
 }
 
+interface RecraftImageResponse {
+  data: Array<{ url: string; b64_json?: string }>
+  error?: { message: string }
+}
+
 export async function POST(request: Request) {
   try {
     // 1. Validate request body
@@ -95,7 +100,7 @@ export async function POST(request: Request) {
       genFilename = `gen-${crypto.randomUUID()}.${ext}`
       imgBuffer = Buffer.from(imagePart.inlineData.data, "base64")
       model = "gemini-2.5-flash-image"
-    } else {
+    } else if (provider === "replicate") {
       // 3b. Replicate — REST API with Prefer: wait (synchronous prediction)
       if (!env.REPLICATE_API_TOKEN) {
         throw new Error("REPLICATE_API_TOKEN is required for Replicate")
@@ -128,6 +133,39 @@ export async function POST(request: Request) {
       contentType = "image/webp"
       genFilename = `gen-${crypto.randomUUID()}.webp`
       model = "flux-schnell"
+    } else {
+      // 3c. Recraft — REST API (recraftv3 model, specialist typographic image gen)
+      if (!env.RECRAFT_API_KEY) {
+        throw new Error("RECRAFT_API_KEY is required when IMAGE_GEN_PROVIDER=recraft")
+      }
+      const recraftRes = await fetch(
+        "https://external.api.recraft.ai/v1/images/generations",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${env.RECRAFT_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt: finalPrompt,
+            n: 1,
+            size: "1024x1024",
+            model: "recraftv3",
+          }),
+        }
+      )
+      const recraftData = (await recraftRes.json()) as RecraftImageResponse
+      if (!recraftRes.ok || !recraftData.data?.[0]?.url) {
+        throw new Error(recraftData.error?.message ?? "Recraft generation failed")
+      }
+      const firstResult = recraftData.data[0]
+      if (!firstResult) throw new Error("Recraft returned empty data")
+      // Download from Recraft URL
+      const recraftImgResponse = await fetch(firstResult.url)
+      imgBuffer = Buffer.from(await recraftImgResponse.arrayBuffer())
+      contentType = "image/webp"
+      genFilename = `gen-${crypto.randomUUID()}.webp`
+      model = "recraftv3"
     }
 
     // 4. Upload to Supabase Storage

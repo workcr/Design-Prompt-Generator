@@ -6,7 +6,7 @@ const envSchema = z.object({
     .string()
     .default("true")
     .transform((v) => v === "true"),
-  IMAGE_GEN_PROVIDER: z.enum(["nano_banana_2", "replicate"]).optional(),
+  IMAGE_GEN_PROVIDER: z.enum(["nano_banana_2", "replicate", "recraft"]).optional(),
 
   // Local inference
   OLLAMA_BASE_URL: z
@@ -20,8 +20,9 @@ const envSchema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
 
-  // Image generation fallback
+  // Image generation fallback / specialist
   REPLICATE_API_TOKEN: z.string().optional(),
+  RECRAFT_API_KEY: z.string().optional(),
 
   // Storage (production only)
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
@@ -56,7 +57,7 @@ export const isLocalMode = (): boolean => env.LOCAL_MODE === true
  *  2. LOCAL_MODE=true  → "replicate"     (Ollama handles agents, Replicate handles images locally)
  *  3. LOCAL_MODE=false → "nano_banana_2" (Gemini API, reuses GOOGLE_GENERATIVE_AI_API_KEY)
  */
-export const getImageGenProvider = (): "nano_banana_2" | "replicate" => {
+export const getImageGenProvider = (): "nano_banana_2" | "replicate" | "recraft" => {
   if (env.IMAGE_GEN_PROVIDER) return env.IMAGE_GEN_PROVIDER
   return isLocalMode() ? "replicate" : "nano_banana_2"
 }
