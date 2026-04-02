@@ -179,7 +179,10 @@ export default function OutputTab({ projectId }: { projectId: string }) {
         }),
       })
       if (!res.ok) {
-        const err = (await res.json()) as { error?: string }
+        const ct = res.headers.get("content-type") ?? ""
+        const err = ct.includes("application/json")
+          ? (await res.json()) as { error?: string }
+          : { error: `Server error ${res.status}` }
         throw new Error(err.error ?? "Evaluation failed")
       }
       const data = (await res.json()) as EvaluationData
@@ -224,7 +227,10 @@ export default function OutputTab({ projectId }: { projectId: string }) {
         }),
       })
       if (!res.ok) {
-        const err = (await res.json()) as { error?: string }
+        const ct = res.headers.get("content-type") ?? ""
+        const err = ct.includes("application/json")
+          ? (await res.json()) as { error?: string }
+          : { error: `Server error ${res.status}` }
         throw new Error(err.error ?? "Refinement failed")
       }
       const data = (await res.json()) as {

@@ -88,42 +88,21 @@ export async function POST(request: Request) {
       )
     }
 
-    // 5. Download reference image from Supabase Storage
-    const { data: refBlob, error: refErr } = await supabase.storage
+    // 5. Resolve reference image public URL (no download needed)
+    const { data: refUrlData } = supabase.storage
       .from("uploads")
-      .download(designSchema.reference_image)
+      .getPublicUrl(designSchema.reference_image)
 
-    if (refErr || !refBlob) {
+    if (!refUrlData.publicUrl) {
       return NextResponse.json(
-        { error: "Reference image not found in storage" },
+        { error: "Could not resolve reference image URL" },
         { status: 404 }
       )
     }
-    const referenceBuffer = Buffer.from(await refBlob.arrayBuffer())
-
-    // 6. Download generated image from Supabase Storage
-    //    Extract filename from public URL: .../uploads/{filename}
-    const genFilename = new URL(generatedImage.url).pathname.split("/").pop()
-    if (!genFilename) {
-      return NextResponse.json(
-        { error: "Could not extract filename from generated image URL" },
-        { status: 400 }
-      )
-    }
-
-    const { data: genBlob, error: genErr } = await supabase.storage
-      .from("uploads")
-      .download(genFilename)
-
-    if (genErr || !genBlob) {
-      return NextResponse.json(
-        { error: "Generated image not found in storage" },
-        { status: 404 }
-      )
-    }
-    const generatedBuffer = Buffer.from(await genBlob.arrayBuffer())
 
     // 7. Agent D — structured visual evaluation via generateObject
+    //    Pass URLs directly — avoids two Storage downloads and keeps the
+    //    route well within the 60s Vercel Hobby function limit
     const { object: result } = await generateObject({
       model: getVisionProvider(),
       schema: EvaluationResultSchema,
@@ -132,9 +111,9 @@ export async function POST(request: Request) {
           role: "user",
           content: [
             { type: "text", text: "REFERENCE IMAGE (the target design):" },
-            { type: "image", image: referenceBuffer },
+            { type: "image", image: new URL(refUrlData.publicUrl) },
             { type: "text", text: "GENERATED IMAGE (the AI output to evaluate):" },
-            { type: "image", image: generatedBuffer },
+            { type: "image", image: new URL(generatedImage.url) },
             { type: "text", text: EVALUATION_PROMPT },
           ],
         },
@@ -177,9 +156,6 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error("[POST /api/evaluate]", error)
-    const msg = error instanceof Error
-      ? error.message
-      : (typeof error === "object" ? JSON.stringify(error) : String(error))
-    return NextResponse.json({ error: "Evaluation failed", detail: msg }, { status: 500 })
+    return NextResponse.json({ error: "Evaluation failed" }, { status: 500 })
   }
 }
