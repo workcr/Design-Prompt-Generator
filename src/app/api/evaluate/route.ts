@@ -177,6 +177,7 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error("[POST /api/evaluate]", error)
-    return NextResponse.json({ error: "Evaluation failed" }, { status: 500 })
+    const msg = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ error: "Evaluation failed", detail: msg }, { status: 500 })
   }
 }
