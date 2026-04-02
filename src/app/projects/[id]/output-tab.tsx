@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type LoadPhase = "loading" | "empty" | "ready" | "error"
+type LoadPhase  = "loading" | "empty" | "ready" | "error"
 type ImagePhase = "none" | "generating" | "complete" | "error"
+type EvalPhase  = "idle" | "evaluating" | "scored" | "refining" | "error"
 
 interface PromptOutputItem {
   id: string
@@ -24,15 +25,43 @@ interface GenerateResponse {
   provider: string
 }
 
+interface DimensionScore {
+  score:   number
+  verdict: "match" | "partial" | "miss"
+  notes:   string
+}
+
+interface EvaluationScores {
+  composition: DimensionScore
+  typography:  DimensionScore
+  palette:     DimensionScore
+  layout:      DimensionScore
+  elements:    DimensionScore
+}
+
+interface EvaluationData {
+  id:        string
+  scores:    EvaluationScores
+  critique:  string
+  iteration: number
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function OutputTab({ projectId }: { projectId: string }) {
-  const [loadPhase, setLoadPhase] = useState<LoadPhase>("loading")
-  const [outputs, setOutputs] = useState<PromptOutputItem[]>([])
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [imagePhase, setImagePhase] = useState<ImagePhase>("none")
-  const [imageError, setImageError] = useState("")
-  const [copied, setCopied] = useState(false)
+  const [loadPhase,    setLoadPhase]    = useState<LoadPhase>("loading")
+  const [outputs,      setOutputs]      = useState<PromptOutputItem[]>([])
+  const [activeIndex,  setActiveIndex]  = useState(0)
+  const [imagePhase,   setImagePhase]   = useState<ImagePhase>("none")
+  const [imageError,   setImageError]   = useState("")
+  const [copied,       setCopied]       = useState(false)
+  const [evalPhase,    setEvalPhase]    = useState<EvalPhase>("idle")
+  const [evalData,     setEvalData]     = useState<EvaluationData | null>(null)
+  const [critiqueText, setCritiqueText] = useState("")
+  const [evalError,    setEvalError]    = useState("")
+  const [iteration,    setIteration]    = useState(1)
+
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Derived — guarded for noUncheckedIndexedAccess
   const activeOutput: PromptOutputItem | null = outputs[activeIndex] ?? null
@@ -72,6 +101,12 @@ export default function OutputTab({ projectId }: { projectId: string }) {
     const selected = outputs[idx]
     setImagePhase(selected?.image_url ? "complete" : "none")
     setImageError("")
+    // Reset eval state when switching outputs
+    setEvalPhase("idle")
+    setEvalData(null)
+    setCritiqueText("")
+    setEvalError("")
+    setIteration(1)
   }
 
   async function generate() {
@@ -122,6 +157,96 @@ export default function OutputTab({ projectId }: { projectId: string }) {
     }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function evaluate() {
+    if (!activeOutput?.id || !activeOutput.image_url) return
+    setEvalPhase("evaluating")
+    setEvalError("")
+    try {
+      // Load generated_image_id for this output
+      const giRes = await fetch(`/api/generated-images?outputId=${activeOutput.id}`)
+      if (!giRes.ok) throw new Error("Could not load generated image data")
+      const giData = (await giRes.json()) as { id: string }
+      if (!giData.id) throw new Error("No generated image found")
+
+      const res = await fetch("/api/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt_output_id:   activeOutput.id,
+          generated_image_id: giData.id,
+        }),
+      })
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string }
+        throw new Error(err.error ?? "Evaluation failed")
+      }
+      const data = (await res.json()) as EvaluationData
+      setEvalData(data)
+      setCritiqueText(data.critique)
+      setIteration(data.iteration)
+      setEvalPhase("scored")
+    } catch (e) {
+      setEvalError(e instanceof Error ? e.message : "Evaluation failed")
+      setEvalPhase("error")
+    }
+  }
+
+  function handleCritiqueChange(value: string) {
+    setCritiqueText(value)
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      if (evalData?.id) void saveCritique(evalData.id, value)
+    }, 500)
+  }
+
+  async function saveCritique(scoreId: string, text: string) {
+    await fetch(`/api/evaluation-scores/${scoreId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ critique: text }),
+    })
+    // Fire-and-forget — silent auto-save, no state change needed
+  }
+
+  async function refine() {
+    if (!evalData?.id) return
+    setEvalPhase("refining")
+    setEvalError("")
+    try {
+      const res = await fetch("/api/refine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id:          projectId,
+          evaluation_score_id: evalData.id,
+        }),
+      })
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string }
+        throw new Error(err.error ?? "Refinement failed")
+      }
+      const data = (await res.json()) as {
+        prompt_output_id:   string
+        generated_image_id: string
+        url:                string
+        iteration:          number
+      }
+      // Update the active output's image URL in-place
+      setOutputs(prev =>
+        prev.map((o, i) =>
+          i === activeIndex ? { ...o, image_url: data.url } : o
+        )
+      )
+      setIteration(data.iteration)
+      setEvalPhase("idle")
+      setEvalData(null)
+      setCritiqueText("")
+    } catch (e) {
+      setEvalError(e instanceof Error ? e.message : "Refinement failed")
+      setEvalPhase("error")
+    }
   }
 
   // ── Render: loading ──────────────────────────────────────────────────────────
@@ -229,9 +354,16 @@ export default function OutputTab({ projectId }: { projectId: string }) {
 
         {/* Generated image */}
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Generated
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Generated
+            </p>
+            {iteration > 1 && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                Iteration {iteration}
+              </span>
+            )}
+          </div>
           {imagePhase === "complete" && activeOutput.image_url ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -243,6 +375,8 @@ export default function OutputTab({ projectId }: { projectId: string }) {
               <span className="absolute bottom-2 right-2 rounded-md bg-background/80 px-2 py-0.5 text-xs font-medium backdrop-blur-sm">
                 {activeOutput.image_provider === "nano_banana_2"
                   ? "Nano Banana 2"
+                  : activeOutput.image_provider === "recraft"
+                  ? "Recraft"
                   : "Replicate"}
               </span>
             </div>
@@ -261,6 +395,103 @@ export default function OutputTab({ projectId }: { projectId: string }) {
           )}
         </div>
       </div>
+
+      {/* Evaluation Panel — shown after image is generated */}
+      {imagePhase === "complete" && activeOutput.image_url && (
+        <div className="flex flex-col gap-4 rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Evaluation</h3>
+            {(evalPhase === "idle" || evalPhase === "error") && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void evaluate()}
+              >
+                Evaluate
+              </Button>
+            )}
+            {evalPhase === "evaluating" && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Spinner />
+                <span>Analysing…</span>
+              </div>
+            )}
+          </div>
+
+          {evalError && (
+            <p className="text-xs text-destructive">{evalError}</p>
+          )}
+
+          {(evalPhase === "scored" || evalPhase === "refining") && evalData && (
+            <>
+              {/* Verdict chips — 5 dimensions */}
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {(["composition", "typography", "palette", "layout", "elements"] as const).map(
+                  (dim) => {
+                    const d = evalData.scores[dim]
+                    return (
+                      <VerdictChip
+                        key={dim}
+                        label={dim}
+                        score={d.score}
+                        verdict={d.verdict}
+                        notes={d.notes}
+                      />
+                    )
+                  }
+                )}
+              </div>
+
+              {/* Editable critique */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Critique (edit before refining)
+                </label>
+                <textarea
+                  value={critiqueText}
+                  onChange={(e) => handleCritiqueChange(e.target.value)}
+                  disabled={evalPhase === "refining"}
+                  rows={4}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Auto-saved · edit to guide the refinement
+                </p>
+              </div>
+
+              {/* Refine actions */}
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => void refine()}
+                  disabled={evalPhase === "refining"}
+                >
+                  {evalPhase === "refining" ? (
+                    <span className="flex items-center gap-2">
+                      <Spinner />
+                      Refining…
+                    </span>
+                  ) : (
+                    "Refine"
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEvalPhase("idle")
+                    setEvalData(null)
+                    setCritiqueText("")
+                    setEvalError("")
+                  }}
+                  disabled={evalPhase === "refining"}
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Actions row — shown after first image */}
       {imagePhase === "complete" && activeOutput.image_url && (
@@ -313,5 +544,35 @@ function Spinner() {
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
       />
     </svg>
+  )
+}
+
+function VerdictChip({
+  label,
+  score,
+  verdict,
+  notes,
+}: {
+  label:   string
+  score:   number
+  verdict: "match" | "partial" | "miss"
+  notes:   string
+}) {
+  const colour =
+    verdict === "match"   ? "bg-green-100 text-green-800 border-green-200" :
+    verdict === "partial" ? "bg-amber-100 text-amber-800 border-amber-200" :
+                            "bg-red-100 text-red-800 border-red-200"
+  const icon =
+    verdict === "match"   ? "✓" :
+    verdict === "partial" ? "~" : "✗"
+
+  return (
+    <div className={`rounded-lg border p-3 text-sm ${colour}`}>
+      <div className="flex items-center justify-between font-medium">
+        <span className="capitalize">{label}</span>
+        <span>{icon} {score}/5</span>
+      </div>
+      <p className="mt-1 text-xs opacity-80">{notes}</p>
+    </div>
   )
 }

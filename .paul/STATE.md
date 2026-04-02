@@ -11,9 +11,9 @@ See: .paul/PROJECT.md (updated 2026-03-29)
 
 Milestone: v0.2 — Output Quality Loop 🔄 Active
 Phase: 10 of 10 (Evaluation + Refinement Loop) — Planning
-Plan: 10-02 — Refine pipeline + Recraft provider (approved, ready to apply)
-Status: Plan 10-02 created — ready to execute
-Last activity: 2026-04-01 — Plan 10-02 written
+Plan: 10-03 — Output Tab UI (approved, ready to apply)
+Status: Plan 10-03 created — ready to execute
+Last activity: 2026-04-01 — Plan 10-03 written
 
 Progress (v0.1 — shipped ✅):
 - v0.1:      [██████████] 100% ✅ SHIPPED
@@ -28,7 +28,7 @@ Progress (v0.2 — active 🔄):
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [Plan 10-02 created — run /paul:apply]
+  ✓        ○        ○     [Plan 10-03 created — run /paul:apply]
 ```
 
 ## Accumulated Context
@@ -105,9 +105,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-01
-Stopped at: Plan 10-02 created — .paul/phases/10-evaluation-refinement-loop/10-02-PLAN.md
-Next action: /paul:apply (Plan 10-02)
-Resume context: RECRAFT_API_KEY optional — code deploys fine without it; set IMAGE_GEN_PROVIDER=recraft + RECRAFT_API_KEY when key is ready. 10-02 adds: Recraft provider, POST /api/refine, PATCH /api/evaluation-scores/[id].
+Stopped at: Plan 10-03 created — .paul/phases/10-evaluation-refinement-loop/10-03-PLAN.md
+Next action: /paul:apply (Plan 10-03)
+Resume context: Last plan of v0.2 — UI only, single file output-tab.tsx. After UNIFY: run /paul:complete-milestone to close v0.2.
 
 ---
 *STATE.md — Updated after every significant action*
