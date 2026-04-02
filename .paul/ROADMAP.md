@@ -230,5 +230,47 @@ Phases: 2 of 2 complete
 - [ ] 10-01: TBD during plan-phase
 
 ---
+
+## v0.3 — Self-Improving Extraction Loop
+
+### Phase 11: Schema-Corrective Refinement Loop
+
+**Goal:** Replace the prompt-patching refine loop with critique-driven schema correction. Each Refine cycle identifies failing evaluation dimensions, runs Agent E to fix the extraction fields for those dimensions only, forks a new `design_schemas` row, rebuilds the full prompt from corrected data, and stores transferable lessons in `correction_memories` — the feed table for Phase 12.
+**Depends on:** Phase 10 (evaluation_scores table + /api/evaluate + /api/refine exist)
+**Research:** Unlikely (internal architecture change, no new dependencies beyond pgvector)
+
+**Scope:**
+- `src/lib/schemas/schema-correction.ts` — NEW: SchemaCorrectionSchema (with lessons field for Phase 12), SCHEMA_CORRECTION_PROMPT
+- `src/app/api/refine/route.ts` — full rewrite: identify failing dims → Agent E (conditional) → fork schema → B2 → return `{ prompt_output_id, iteration }` (no internal generate)
+- `src/lib/schema.postgres.sql` — add `correction_memories` table with `embedding vector(768) NULL` (Phase 12 fills it)
+- `src/types/db.ts` — add `CorrectionMemory` interface
+- `src/app/projects/[id]/output-tab.tsx` — refine() becomes 2-step: call /api/refine → call /api/generate
+
+**Phase 11→12 data contract:** Each Agent E correction produces one `LessonSchema` entry per corrected field. The `lesson` text is the unit Phase 12 embeds. The `embedding vector(768)` column is created NULL; Phase 12 computes it via `text-embedding-004`.
+
+**Plans:**
+- [ ] 11-01: Agent E + Schema-Corrective Refine Route (backend)
+- [ ] 11-02: Output Tab 2-Step Refine UI
+
+---
+
+### Phase 12: Cross-Project Correction Memory
+
+**Goal:** Correction lessons from Phase 11 become active knowledge — embedded via `text-embedding-004`, stored in pgvector, and retrieved at Agent A analysis time. Every new project benefits from lessons learned on all previous projects.
+**Depends on:** Phase 11 (`correction_memories` table populated with lessons)
+**Research:** Likely (Supabase pgvector setup, embedding API choice, retrieval query pattern)
+
+**Scope:**
+- Enable pgvector in Supabase + create IVFFlat index on `correction_memories.embedding`
+- Embedding worker: after each Agent E correction, compute `text-embedding-004` vector and store
+- Agent A injection: before `generateObject`, retrieve top-K lessons for the current project's failing dimensions via cosine similarity; inject as "Prior correction notes" section in `DESIGN_ANALYSIS_PROMPT`
+- Two-pass option: first-pass raw extraction → embed style_summary → retrieve relevant cross-project memories → second-pass corrected extraction
+
+**Plans:**
+- [ ] 12-01: Embedding compute + storage (pgvector index, embedding API route, store after correction)
+- [ ] 12-02: Agent A retrieval injection (cosine similarity query, prompt injection, 2-pass analysis)
+
+---
+
 *Roadmap created: 2026-03-28*
-*Last updated: 2026-03-31 — v0.2 milestone initialized*
+*Last updated: 2026-04-02 — v0.3 milestone added (Phases 11–12)*

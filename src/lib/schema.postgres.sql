@@ -80,3 +80,28 @@ CREATE INDEX IF NOT EXISTS idx_grammar_blueprints_project_id ON grammar_blueprin
 CREATE INDEX IF NOT EXISTS idx_prompt_outputs_project_id     ON prompt_outputs(project_id);
 CREATE INDEX IF NOT EXISTS idx_generated_images_output_id    ON generated_images(prompt_output_id);
 CREATE INDEX IF NOT EXISTS idx_evaluation_scores_output_id   ON evaluation_scores(prompt_output_id);
+
+-- ─── Phase 11: Correction Memories (Phase 12 feed table) ─────────────────────
+
+-- Enable pgvector extension (required for Phase 12 embedding retrieval)
+-- Safe to run even if already enabled
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Agent E lessons: populated by Phase 11, embedded by Phase 12
+-- embedding column is NULL until Phase 12 computes text-embedding-004 (768 dims)
+CREATE TABLE IF NOT EXISTS correction_memories (
+  id                   TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  project_id           TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  evaluation_score_id  TEXT REFERENCES evaluation_scores(id) ON DELETE SET NULL,
+  dimension            TEXT NOT NULL,       -- 'typography' | 'composition' | 'palette' | 'layout' | 'elements'
+  lesson               TEXT NOT NULL,       -- transferable text; Phase 12 embeds this field
+  bad_value            JSONB,               -- what was extracted (incorrect) — for debugging
+  correct_value        JSONB,               -- what Agent E determined (correct) — for debugging
+  embedding            vector(768),         -- NULL until Phase 12 computes it
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_correction_memories_project_id ON correction_memories(project_id);
+CREATE INDEX IF NOT EXISTS idx_correction_memories_dimension  ON correction_memories(dimension);
+-- Phase 12 will add:
+-- CREATE INDEX ON correction_memories USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);

@@ -9,11 +9,11 @@ See: .paul/PROJECT.md (updated 2026-03-29)
 
 ## Current Position
 
-Milestone: v0.2 — Output Quality Loop 🔄 Active
-Phase: 10 of 10 (Evaluation + Refinement Loop) — ✅ Complete
-Plan: All plans complete
-Status: v0.2 milestone complete — run /paul:complete-milestone
-Last activity: 2026-04-01 — Plan 10-03 applied + unified
+Milestone: v0.3 — Self-Improving Extraction Loop 🔄 Active
+Phase: 11 of 12 (Schema-Corrective Refinement Loop) — 🔲 Plan ready
+Plan: 11-01 — pending approval
+Status: Plan 11-01 written, awaiting user approval to APPLY
+Last activity: 2026-04-02 — Plan 11-01 created; Phase 11 + 12 added to roadmap
 
 Progress (v0.1 — shipped ✅):
 - v0.1:      [██████████] 100% ✅ SHIPPED
@@ -23,12 +23,17 @@ Progress (v0.2 — complete ✅):
 - Phase 9:   [██████████] 100% ✅ Complete
 - Phase 10:  [██████████] 100% ✅ Complete
 
+Progress (v0.3 — active 🔄):
+- Milestone: [░░░░░░░░░░]   0%
+- Phase 11:  [░░░░░░░░░░]   0% (Plan 11-01 pending approval)
+- Phase 12:  [░░░░░░░░░░]   0% (planned)
+
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [v0.2 complete — run /paul:complete-milestone]
+  ✓        ·        ·     [Plan 11-01 approved? → run /paul:apply]
 ```
 
 ## Accumulated Context
@@ -104,10 +109,10 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-01
-Stopped at: Plan 10-03 applied + unified — evaluation loop UI complete, v0.2 all phases done
-Next action: /paul:complete-milestone to archive v0.2 and prepare for v0.3
-Resume context: All v0.2 work shipped. Deploy to Vercel + add RECRAFT_API_KEY when key is ready.
+Last session: 2026-04-02
+Stopped at: Plan 11-01 written and awaiting approval
+Next action: User approves Plan 11-01 → /paul:apply
+Resume context: v0.3 scoped with Phases 11 + 12. Phase 12 uses pgvector (text-embedding-004, 768 dims) for cross-project lesson retrieval. Phase 11 creates correction_memories table with embedding = NULL as the Phase 12 feed. User also needs to run updated schema.postgres.sql in Supabase (adds correction_memories table + CREATE EXTENSION vector).
 
 ---
 *STATE.md — Updated after every significant action*

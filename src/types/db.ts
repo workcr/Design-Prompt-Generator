@@ -71,6 +71,18 @@ export interface EvaluationScore {
   created_at:          string
 }
 
+export interface CorrectionMemory {
+  id:                  string
+  project_id:          string
+  evaluation_score_id: string | null
+  dimension:           string          // 'typography' | 'composition' | etc.
+  lesson:              string          // transferable text; Phase 12 embeds this
+  bad_value:           Record<string, unknown> | null
+  correct_value:       Record<string, unknown> | null
+  // embedding omitted — vector type not representable in TS; not used client-side
+  created_at:          string
+}
+
 /** Project row joined with its latest DesignSchema and GrammarBlueprint */
 export interface ProjectDetail extends Project {
   design_schema:     DesignSchema | null
