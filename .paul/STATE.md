@@ -10,10 +10,10 @@ See: .paul/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Milestone: v0.3 — Self-Improving Extraction Loop 🔄 Active
-Phase: 12 of 12 (Cross-Project Correction Memory) — 🔲 Not Started
-Plan: None — run /paul:plan to begin Phase 12
-Status: Ready for Phase 12 planning
-Last activity: 2026-04-02 — Phase 11 complete (2/2 plans unified)
+Phase: 12 of 12 (Cross-Project Correction Memory) — 🔄 In Progress (1/2 plans)
+Plan: 12-01 complete — 12-02 pending
+Status: Plan 12-01 unified — ready for Plan 12-02
+Last activity: 2026-04-02 — Plan 12-01 applied + unified
 
 Progress (v0.1 — shipped ✅):
 - v0.1:      [██████████] 100% ✅ SHIPPED
@@ -33,7 +33,7 @@ Progress (v0.3 — active 🔄):
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ·        ·        ·     [Phase 12 not started — run /paul:plan]
+  ✓        ✓        ✓     [Plan 12-01 complete — run /paul:plan for 12-02]
 ```
 
 ## Accumulated Context
@@ -75,6 +75,8 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | `maxDuration = 60` on all AI routes | 08-03 | Vercel Hobby default is 10s; Gemini/OpenAI calls exceed this — required for analyze, distill, rewrite, generate |
 | `z.record(z.string(), z.unknown())` not `z.record(z.unknown())` | 11-01 | This Zod version requires explicit key + value type args — apply to all future record schemas |
 | Supabase JSONB → cast via `as unknown as T` not JSON.parse | 11-01 | JSONB columns return parsed objects from Supabase JS client; db.ts types them as string — cast without parsing |
+| HNSW over IVFFlat for pgvector index | 12-01 | HNSW is incremental — works on empty tables; IVFFlat requires minimum rows for training |
+| pgvector UPDATE via Supabase JS: `[f1,f2,...]` string | 12-01 | PostgREST requires vector as `[n,n,...]` string format, not raw JS array |
 | correction_memories insert non-fatal | 11-01 | Memory write failure shouldn't abort the refine cycle — console.error only |
 | `gemini-2.5-flash` as vision model (not 1.5 or 2.0) | 08-03 | gemini-1.5-flash + gemini-2.0-flash deprecated for new API users; confirmed via ListModels API |
 | Prefer:wait header for Replicate | 06-01 | Synchronous prediction — no polling loop needed for flux-schnell |
@@ -91,7 +93,7 @@ Decisions imported from PLANNING.md at init:
 
 ### Git State
 
-Last commit: 54b4c36 (feat(output-tab): 2-step refine flow — correcting → generating)
+Last commit: e465805 (feat(embeddings): compute text-embedding-004 vectors after Agent E corrections)
 Branch: main
 
 ### Deferred Issues
@@ -108,14 +110,14 @@ Branch: main
 | Text Fields + Elements per-item editing | 04-02 | M | Phase 7 (Polish) |
 
 ### Blockers/Concerns
-- Phase 12 (embedding compute) requires `text-embedding-004` API call after each Agent E correction. Confirm `GEMINI_API_KEY` has access (same Google AI Studio key — should be accessible).
+None.
 
 ## Session Continuity
 
 Last session: 2026-04-02
-Stopped at: Phase 11 complete — both plans applied + unified
-Next action: /paul:plan to begin Phase 12 (Cross-Project Correction Memory)
-Resume context: Phase 11 fully shipped. correction_memories table live in Supabase with embedding vector(768) NULL column. Phase 12 Plan 12-01 computes embeddings via text-embedding-004 and fills the column + adds IVFFlat index. Plan 12-02 injects top-K lessons into DESIGN_ANALYSIS_PROMPT at Agent A analysis time.
+Stopped at: Plan 12-01 applied + unified
+Next action: /paul:plan for Plan 12-02 (Agent A retrieval injection)
+Resume context: Plan 12-01 shipped. correction_memories.embedding now populated after each Agent E correction. HNSW index live in Supabase. Plan 12-02 adds retrieval injection to /api/analyze: brief first-pass to get style_summary → embed → cosine query top-K lessons → inject into DESIGN_ANALYSIS_PROMPT → full analysis. env key is GOOGLE_GENERATIVE_AI_API_KEY (not GEMINI_API_KEY).
 
 ---
 *STATE.md — Updated after every significant action*
