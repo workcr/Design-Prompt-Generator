@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { generateObject } from "ai"
+import { generateObject, generateText } from "ai"
 import crypto from "crypto"
 import { getSupabaseServer } from "@/lib/supabase-server"
 
@@ -11,6 +11,7 @@ import {
   DesignExtractionSchema,
   DESIGN_ANALYSIS_PROMPT,
 } from "@/lib/schemas/design-extraction"
+import { computeEmbedding } from "@/lib/embeddings"
 import type { DesignSchema } from "@/types/db"
 
 const RequestSchema = z.object({
@@ -54,6 +55,56 @@ export async function POST(request: Request) {
 
     const imageBuffer = Buffer.from(await blob.arrayBuffer())
 
+    // 3b. Retrieve relevant correction lessons via embedding similarity (Phase 12)
+    // Brief first-pass: describe typography + palette → embed → cosine query top-5 lessons
+    // Falls back to standard single-pass analysis silently if no lessons or embedding fails.
+    let priorCorrectionsBlock = ""
+
+    try {
+      const { text: styleDescription } = await generateText({
+        model: getVisionProvider(),
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "image", image: imageBuffer },
+              {
+                type: "text",
+                text:
+                  "In 1-2 sentences, describe the dominant typographic style " +
+                  "(typeface classification, stroke contrast, weight) and color " +
+                  "palette character of this image. Be specific about visual signals.",
+              },
+            ],
+          },
+        ],
+      })
+
+      const queryVector = await computeEmbedding(styleDescription)
+
+      if (queryVector) {
+        const { data: lessons } = await supabase.rpc("match_correction_memories", {
+          query_embedding: `[${queryVector.join(",")}]`,
+          match_count:     5,
+        })
+
+        if (lessons && (lessons as { dimension: string; lesson: string }[]).length > 0) {
+          const lessonLines = (lessons as { dimension: string; lesson: string }[])
+            .map((l) => `• [${l.dimension}] ${l.lesson}`)
+            .join("\n")
+
+          priorCorrectionsBlock =
+            "PRIOR EXTRACTION CORRECTIONS — from similar past images:\n" +
+            "Apply these lessons when you detect the same visual patterns:\n\n" +
+            lessonLines +
+            "\n\n---\n\n"
+        }
+      }
+    } catch (retrievalErr) {
+      // Non-fatal — log and continue with standard single-pass analysis
+      console.error("[analyze] lesson retrieval failed (non-fatal):", retrievalErr)
+    }
+
     // 4. Run structured extraction via AI SDK
     // The vision provider uses compatibility:"compatible" (chat completions endpoint)
     // which serialises Buffer → data:image/<type>;base64,... correctly for Ollama.
@@ -65,7 +116,7 @@ export async function POST(request: Request) {
           role: "user",
           content: [
             { type: "image", image: imageBuffer },
-            { type: "text", text: DESIGN_ANALYSIS_PROMPT },
+            { type: "text", text: priorCorrectionsBlock + DESIGN_ANALYSIS_PROMPT },
           ],
         },
       ],
