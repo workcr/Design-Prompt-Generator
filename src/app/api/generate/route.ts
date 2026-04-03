@@ -9,8 +9,9 @@ export const maxDuration = 60
 import type { PromptOutput } from "@/types/db"
 
 const RequestSchema = z.object({
-  outputId: z.string().min(1),
-  mode: z.enum(["prompt", "schema"]).default("prompt"),
+  outputId:    z.string().min(1),
+  mode:        z.enum(["prompt", "schema"]).default("prompt"),
+  aspectRatio: z.string().optional(), // "auto" or explicit e.g. "16:9" — overrides schema value
 })
 
 interface ReplicateResponse {
@@ -130,7 +131,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "outputId is required" }, { status: 400 })
     }
 
-    const { outputId, mode } = parsed.data
+    const { outputId, mode, aspectRatio: arOverride } = parsed.data
     const supabase = getSupabaseServer()
 
     // 2. Load prompt output
@@ -162,8 +163,11 @@ export async function POST(request: Request) {
       generationPrompt = promptOutput.final_prompt
     }
 
-    // 4. Parse aspect ratio from schema snapshot
-    const aspectRatio = parseAspectRatio(promptOutput.schema_snapshot)
+    // 4. Resolve aspect ratio — explicit override wins, else read from schema
+    const aspectRatio =
+      arOverride && arOverride !== "auto"
+        ? arOverride
+        : parseAspectRatio(promptOutput.schema_snapshot)
 
     const provider = getImageGenProvider()
     let imgBuffer: Buffer

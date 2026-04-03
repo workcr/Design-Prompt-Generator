@@ -12,6 +12,7 @@ type EvalPhase  = "idle" | "evaluating" | "scored" | "refining" | "error"
 interface PromptOutputItem {
   id: string
   final_prompt: string | null
+  schema_snapshot: string | null
   model_used: string | null
   created_at: string
   reference_image: string | null
@@ -62,11 +63,29 @@ export default function OutputTab({ projectId }: { projectId: string }) {
   const [iteration,    setIteration]    = useState(1)
   const [refineStep,   setRefineStep]   = useState<"correcting" | "generating" | null>(null)
   const [promptMode,   setPromptMode]   = useState<"prompt" | "schema">("prompt")
+  const [aspectRatio,  setAspectRatio]  = useState<string>("auto")
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Derived — guarded for noUncheckedIndexedAccess
   const activeOutput: PromptOutputItem | null = outputs[activeIndex] ?? null
+
+  // Active generation content — text prompt or pretty-printed JSON schema
+  const activeContent: string = (() => {
+    if (!activeOutput) return ""
+    if (promptMode === "schema" && activeOutput.schema_snapshot) {
+      try {
+        return JSON.stringify(
+          JSON.parse(activeOutput.schema_snapshot) as unknown,
+          null,
+          2
+        )
+      } catch {
+        return activeOutput.final_prompt ?? ""
+      }
+    }
+    return activeOutput.final_prompt ?? ""
+  })()
 
   useEffect(() => {
     void loadData()
@@ -120,7 +139,7 @@ export default function OutputTab({ projectId }: { projectId: string }) {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outputId: activeOutput.id, mode: promptMode }),
+        body: JSON.stringify({ outputId: activeOutput.id, mode: promptMode, aspectRatio }),
       })
       if (!res.ok) {
         const data = (await res.json()) as { error?: string }
@@ -144,7 +163,7 @@ export default function OutputTab({ projectId }: { projectId: string }) {
   }
 
   async function copyPrompt() {
-    const text = activeOutput?.final_prompt ?? ""
+    const text = activeContent
     try {
       await navigator.clipboard.writeText(text)
     } catch {
@@ -248,7 +267,7 @@ export default function OutputTab({ projectId }: { projectId: string }) {
       const genRes = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outputId: refineData.prompt_output_id, mode: promptMode }),
+        body: JSON.stringify({ outputId: refineData.prompt_output_id, mode: promptMode, aspectRatio }),
       })
       if (!genRes.ok) {
         const ct = genRes.headers.get("content-type") ?? ""
@@ -344,14 +363,15 @@ export default function OutputTab({ projectId }: { projectId: string }) {
         </div>
       )}
 
-      {/* Prompt preview + mode toggle */}
-      <div className="rounded-lg border p-4">
-        <div className="mb-2 flex items-center justify-between">
+      {/* Generation controls */}
+      <div className="rounded-lg border p-4 flex flex-col gap-3">
+        {/* Row 1: label + mode toggle + copy */}
+        <div className="flex items-center justify-between">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Generation Input
           </h3>
           <div className="flex items-center gap-2">
-            {/* Mode toggle */}
+            {/* Prompt mode toggle */}
             <div className="flex items-center rounded-md border text-xs font-medium overflow-hidden">
               <button
                 onClick={() => setPromptMode("prompt")}
@@ -379,10 +399,37 @@ export default function OutputTab({ projectId }: { projectId: string }) {
             </Button>
           </div>
         </div>
-        <p className="line-clamp-4 font-mono text-sm leading-relaxed text-muted-foreground">
-          {activeOutput.final_prompt ?? "—"}
-        </p>
-        <p className="mt-2 text-xs text-muted-foreground">
+
+        {/* Row 2: aspect ratio selector */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Aspect Ratio
+          </span>
+          <div className="flex items-center rounded-md border text-xs font-medium overflow-hidden">
+            {(["auto", "1:1", "16:9", "9:16", "4:3", "3:4"] as const).map((ar) => (
+              <button
+                key={ar}
+                onClick={() => setAspectRatio(ar)}
+                className={`px-2.5 py-1.5 transition-colors ${
+                  aspectRatio === ar
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {ar === "auto" ? "Auto" : ar}
+              </button>
+            ))}
+          </div>
+          {aspectRatio === "auto" && (
+            <span className="text-xs text-muted-foreground">reads from schema</span>
+          )}
+        </div>
+
+        {/* Preview */}
+        <pre className="line-clamp-4 font-mono text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap break-all">
+          {activeContent || "—"}
+        </pre>
+        <p className="text-xs text-muted-foreground">
           {new Date(activeOutput.created_at).toLocaleString()}
         </p>
       </div>

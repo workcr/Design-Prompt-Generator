@@ -4,6 +4,7 @@ import { getSupabaseServer } from "@/lib/supabase-server"
 interface PromptOutputWithImage {
   id: string
   final_prompt: string | null
+  schema_snapshot: string | null
   model_used: string | null
   created_at: string
   reference_image: string | null
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
   // 1. Fetch prompt outputs
   const { data: outputs, error: outputsError } = await supabase
     .from("prompt_outputs")
-    .select("id, final_prompt, model_used, created_at, project_id")
+    .select("id, final_prompt, schema_snapshot, model_used, created_at, project_id")
     .eq("project_id", projectId)
     .order("created_at", { ascending: false })
     .limit(limit)
@@ -76,6 +77,7 @@ export async function GET(request: Request) {
     return {
       id:              o.id,
       final_prompt:    o.final_prompt,
+      schema_snapshot: (o as Record<string, unknown>).schema_snapshot as string | null ?? null,
       model_used:      o.model_used,
       created_at:      o.created_at,
       reference_image: referenceImage,
