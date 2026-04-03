@@ -61,6 +61,7 @@ export default function OutputTab({ projectId }: { projectId: string }) {
   const [evalError,    setEvalError]    = useState("")
   const [iteration,    setIteration]    = useState(1)
   const [refineStep,   setRefineStep]   = useState<"correcting" | "generating" | null>(null)
+  const [promptMode,   setPromptMode]   = useState<"prompt" | "schema">("prompt")
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -119,7 +120,7 @@ export default function OutputTab({ projectId }: { projectId: string }) {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outputId: activeOutput.id }),
+        body: JSON.stringify({ outputId: activeOutput.id, mode: promptMode }),
       })
       if (!res.ok) {
         const data = (await res.json()) as { error?: string }
@@ -247,7 +248,7 @@ export default function OutputTab({ projectId }: { projectId: string }) {
       const genRes = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outputId: refineData.prompt_output_id }),
+        body: JSON.stringify({ outputId: refineData.prompt_output_id, mode: promptMode }),
       })
       if (!genRes.ok) {
         const ct = genRes.headers.get("content-type") ?? ""
@@ -343,15 +344,40 @@ export default function OutputTab({ projectId }: { projectId: string }) {
         </div>
       )}
 
-      {/* Prompt preview */}
+      {/* Prompt preview + mode toggle */}
       <div className="rounded-lg border p-4">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Prompt
+            Generation Input
           </h3>
-          <Button variant="outline" size="sm" onClick={() => void copyPrompt()}>
-            {copied ? "Copied!" : "Copy Prompt"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Mode toggle */}
+            <div className="flex items-center rounded-md border text-xs font-medium overflow-hidden">
+              <button
+                onClick={() => setPromptMode("prompt")}
+                className={`px-3 py-1.5 transition-colors ${
+                  promptMode === "prompt"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Text
+              </button>
+              <button
+                onClick={() => setPromptMode("schema")}
+                className={`px-3 py-1.5 transition-colors ${
+                  promptMode === "schema"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                JSON Schema
+              </button>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => void copyPrompt()}>
+              {copied ? "Copied!" : "Copy"}
+            </Button>
+          </div>
         </div>
         <p className="line-clamp-4 font-mono text-sm leading-relaxed text-muted-foreground">
           {activeOutput.final_prompt ?? "—"}
