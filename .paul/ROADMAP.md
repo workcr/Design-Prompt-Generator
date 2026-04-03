@@ -236,7 +236,7 @@ Phases: 2 of 2 complete
 | Phase | Name | Plans | Status | Completed |
 |-------|------|-------|--------|-----------|
 | 11 | Schema-Corrective Refinement Loop | 2 | ✅ Complete | 2026-04-02 |
-| 12 | Cross-Project Correction Memory | 2 | 🔄 In Progress | — |
+| 12 | Cross-Project Correction Memory | 2 | ✅ Complete | 2026-04-02 |
 
 ### Phase 11: Schema-Corrective Refinement Loop ✅ Complete (2026-04-02)
 
@@ -259,21 +259,21 @@ Phases: 2 of 2 complete
 
 ---
 
-### Phase 12: Cross-Project Correction Memory
+### Phase 12: Cross-Project Correction Memory ✅ Complete (2026-04-02)
 
 **Goal:** Correction lessons from Phase 11 become active knowledge — embedded via `text-embedding-004`, stored in pgvector, and retrieved at Agent A analysis time. Every new project benefits from lessons learned on all previous projects.
 **Depends on:** Phase 11 (`correction_memories` table populated with lessons)
 **Research:** Likely (Supabase pgvector setup, embedding API choice, retrieval query pattern)
 
 **Scope:**
-- Enable pgvector in Supabase + create IVFFlat index on `correction_memories.embedding`
+- Enable pgvector in Supabase + create HNSW index on `correction_memories.embedding`
 - Embedding worker: after each Agent E correction, compute `text-embedding-004` vector and store
-- Agent A injection: before `generateObject`, retrieve top-K lessons for the current project's failing dimensions via cosine similarity; inject as "Prior correction notes" section in `DESIGN_ANALYSIS_PROMPT`
-- Two-pass option: first-pass raw extraction → embed style_summary → retrieve relevant cross-project memories → second-pass corrected extraction
+- Agent A injection: before `generateObject`, brief vision description → embed → retrieve top-5 lessons via cosine similarity → inject as "Prior Extraction Corrections" block in analysis prompt
+- 2-pass: brief `generateText` description → `computeEmbedding` → `match_correction_memories` RPC → enriched `generateObject`
 
 **Plans:**
-- [ ] 12-01: Embedding compute + storage (pgvector index, embedding API route, store after correction)
-- [ ] 12-02: Agent A retrieval injection (cosine similarity query, prompt injection, 2-pass analysis)
+- [x] 12-01: Embedding compute + storage (HNSW index, computeEmbedding helper, store after correction) — 2026-04-02
+- [x] 12-02: Agent A retrieval injection (match_correction_memories RPC, 2-pass injection, graceful degradation) — 2026-04-02
 
 ---
 

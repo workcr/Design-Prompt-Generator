@@ -9,11 +9,11 @@ See: .paul/PROJECT.md (updated 2026-03-29)
 
 ## Current Position
 
-Milestone: v0.3 — Self-Improving Extraction Loop 🔄 Active
-Phase: 12 of 12 (Cross-Project Correction Memory) — 🔄 In Progress (1/2 plans)
-Plan: 12-01 complete — 12-02 pending
-Status: Plan 12-01 unified — ready for Plan 12-02
-Last activity: 2026-04-02 — Plan 12-01 applied + unified
+Milestone: v0.3 — Self-Improving Extraction Loop ✅ COMPLETE
+Phase: 12 of 12 (Cross-Project Correction Memory) ✅ Complete (2/2 plans)
+Plan: All plans complete
+Status: v0.3 milestone complete — ready for next milestone
+Last activity: 2026-04-02 — Phase 12 complete, v0.3 shipped
 
 Progress (v0.1 — shipped ✅):
 - v0.1:      [██████████] 100% ✅ SHIPPED
@@ -23,17 +23,17 @@ Progress (v0.2 — complete ✅):
 - Phase 9:   [██████████] 100% ✅ Complete
 - Phase 10:  [██████████] 100% ✅ Complete
 
-Progress (v0.3 — active 🔄):
-- Milestone: [█████░░░░░]  50%
+Progress (v0.3 — complete ✅):
+- Milestone: [██████████] 100% ✅ COMPLETE
 - Phase 11:  [██████████] 100% ✅ Complete (2/2 plans)
-- Phase 12:  [░░░░░░░░░░]   0% (not started)
+- Phase 12:  [██████████] 100% ✅ Complete (2/2 plans)
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [Plan 12-01 complete — run /paul:plan for 12-02]
+  ✓        ✓        ✓     [v0.3 complete — ready for next milestone]
 ```
 
 ## Accumulated Context
@@ -93,7 +93,7 @@ Decisions imported from PLANNING.md at init:
 
 ### Git State
 
-Last commit: e465805 (feat(embeddings): compute text-embedding-004 vectors after Agent E corrections)
+Last commit: d2ae99a (feat(analyze): inject correction lessons into Agent A via embedding retrieval)
 Branch: main
 
 ### Deferred Issues
@@ -115,9 +115,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-02
-Stopped at: Plan 12-01 applied + unified
-Next action: /paul:plan for Plan 12-02 (Agent A retrieval injection)
-Resume context: Plan 12-01 shipped. correction_memories.embedding now populated after each Agent E correction. HNSW index live in Supabase. Plan 12-02 adds retrieval injection to /api/analyze: brief first-pass to get style_summary → embed → cosine query top-K lessons → inject into DESIGN_ANALYSIS_PROMPT → full analysis. env key is GOOGLE_GENERATIVE_AI_API_KEY (not GEMINI_API_KEY).
+Stopped at: v0.3 milestone complete — all 4 phases (9–12) shipped
+Next action: /paul:milestone to define v0.4, or deploy to Vercel and run the live self-improving loop
+Resume context: v0.3 fully shipped. The complete self-improving loop is live:
+  Agent E corrects schema → writes lesson → embedding computed → stored in correction_memories
+  Agent A retrieves similar lessons → injects before extraction → better schemas from day 1
+  All Vercel-compatible (maxDuration=60, 2-step refine UI). Deploy and run evaluate → refine → generate cycle to populate correction_memories with real lessons.
 
 ---
 *STATE.md — Updated after every significant action*

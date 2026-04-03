@@ -70,6 +70,8 @@ Designers and prompt engineers can convert any image into a fully controllable, 
 - ✓ **Schema-corrective Agent E** — `/api/refine` full rewrite: identifies failing dims (score ≤2 or verdict "miss") → Agent E (Gemini 2.5 Flash vision + `generateObject`) corrects only failing schema fields → forks new `design_schemas` row → B2 rebuilds prompt from corrected data — Phase 11
 - ✓ **correction_memories table** — Supabase table with `embedding vector(768) NULL`; Agent E writes one lesson per corrected field; Phase 12 feed — Phase 11
 - ✓ **2-step refine UI** — `refine()` chains POST /api/refine → POST /api/generate; "Correcting extraction…" → "Generating…" labels; `activeOutput.id` updated to new prompt_output_id after cycle — Phase 11
+- ✓ **Embedding compute** — `computeEmbedding()` helper via `text-embedding-004` direct REST; fires after every Agent E correction; stores 768-dim vectors in `correction_memories.embedding`; HNSW index in Supabase — Phase 12
+- ✓ **Agent A retrieval injection** — 2-pass: brief vision description → embed → `match_correction_memories` cosine RPC → top-5 lessons prepended to `DESIGN_ANALYSIS_PROMPT`; graceful degradation on empty DB or embedding failure — Phase 12
 
 ### Active (In Progress)
 None.
