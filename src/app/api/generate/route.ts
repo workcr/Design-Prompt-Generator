@@ -176,17 +176,21 @@ export async function POST(request: Request) {
       if (!env.GOOGLE_GENERATIVE_AI_API_KEY) {
         throw new Error("GOOGLE_GENERATIVE_AI_API_KEY is required for Nano Banana 2")
       }
+      // gemini-2.5-flash-image does not support aspectRatio in generationConfig
+      // (that's an Imagen-only parameter). Prepend a size instruction to the prompt instead.
+      const geminiAr = toGeminiAspectRatio(aspectRatio)
+      const geminiPrompt = geminiAr !== "1:1"
+        ? `Generate a ${geminiAr} aspect ratio image.\n\n${generationPrompt}`
+        : generationPrompt
+
       const geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${env.GOOGLE_GENERATIVE_AI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: generationPrompt }] }],
-            generationConfig: {
-              responseModalities: ["IMAGE"],
-              aspectRatio: toGeminiAspectRatio(aspectRatio),
-            },
+            contents: [{ parts: [{ text: geminiPrompt }] }],
+            generationConfig: { responseModalities: ["IMAGE"] },
           }),
         }
       )
