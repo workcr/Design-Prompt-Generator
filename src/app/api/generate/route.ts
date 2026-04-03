@@ -59,19 +59,24 @@ function parseAspectRatio(schemaSnapshot: string | null): string {
 }
 
 /**
- * Map any W:H string to the closest aspect ratio Gemini supports.
- * Gemini accepts: "1:1" | "3:4" | "4:3" | "9:16" | "16:9"
+ * Map any W:H string to the closest aspect ratio Gemini 2.5 Flash Image supports
+ * via generationConfig.imageConfig.aspectRatio.
+ * Full supported set: "1:1","1:4","1:8","2:3","3:2","3:4","4:1","4:3","4:5",
+ *                     "5:4","8:1","9:16","16:9","21:9"
  */
 function toGeminiAspectRatio(ar: string): string {
-  const supported = ["1:1", "3:4", "4:3", "9:16", "16:9"] as const
-  if ((supported as readonly string[]).includes(ar)) return ar
+  const supported = [
+    "1:1","1:4","1:8","2:3","3:2","3:4","4:1","4:3","4:5",
+    "5:4","8:1","9:16","16:9","21:9",
+  ]
+  if (supported.includes(ar)) return ar
   const [w, h] = ar.split(":").map(Number)
   if (!w || !h || isNaN(w) || isNaN(h)) return "1:1"
   const r = w / h
-  if (r >= 1.6)  return "16:9"
-  if (r >= 1.2)  return "4:3"
+  if (r >= 1.6)   return "16:9"
+  if (r >= 1.2)   return "4:3"
   if (r <= 0.625) return "9:16"
-  if (r <= 0.85) return "3:4"
+  if (r <= 0.85)  return "3:4"
   return "1:1"
 }
 
@@ -180,21 +185,19 @@ export async function POST(request: Request) {
       if (!env.GOOGLE_GENERATIVE_AI_API_KEY) {
         throw new Error("GOOGLE_GENERATIVE_AI_API_KEY is required for Nano Banana 2")
       }
-      // gemini-2.5-flash-image does not support aspectRatio in generationConfig
-      // (that's an Imagen-only parameter). Prepend a size instruction to the prompt instead.
-      const geminiAr = toGeminiAspectRatio(aspectRatio)
-      const geminiPrompt = geminiAr !== "1:1"
-        ? `Generate a ${geminiAr} aspect ratio image.\n\n${generationPrompt}`
-        : generationPrompt
-
+      // Use generationConfig.imageConfig.aspectRatio — the correct native parameter
+      // for gemini-2.5-flash-image (confirmed: supports 14 ratios via imageConfig)
       const geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${env.GOOGLE_GENERATIVE_AI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: geminiPrompt }] }],
-            generationConfig: { responseModalities: ["IMAGE"] },
+            contents: [{ parts: [{ text: generationPrompt }] }],
+            generationConfig: {
+              responseModalities: ["IMAGE"],
+              imageConfig: { aspectRatio: toGeminiAspectRatio(aspectRatio) },
+            },
           }),
         }
       )
